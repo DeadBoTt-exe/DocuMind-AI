@@ -1,3 +1,11 @@
+"""
+This is the chunker module of the pipeline which is responsible for splitting raw documentation
+into semantic meaningful chunks suitable for embedding and retrieval.
+
+We performed chunking based on headings and paragraph size
+and attached useful metadata such as source file, section name, and inferred service.
+"""
+
 import re
 from typing import List, Dict
 
