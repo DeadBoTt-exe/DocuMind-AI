@@ -1,3 +1,10 @@
+"""
+This is the embeddings module of the pipeline.
+
+It converts chunks of text into numerical vector representations that can be
+indexed and searched.
+"""
+
 from sentence_transformers import SentenceTransformer
 from typing import List
 import numpy as np
