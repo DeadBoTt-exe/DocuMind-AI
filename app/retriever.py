@@ -1,3 +1,11 @@
+"""
+This is the retriever module.
+
+This implements vector-based search using FAISS it also stores embeddings and
+their associated metadata and retrieves the most relevant chunks for any
+given query.
+"""
+
 import faiss
 import numpy as np
 from typing import List, Dict
