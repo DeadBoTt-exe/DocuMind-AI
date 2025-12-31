@@ -29,9 +29,7 @@ The architecture follows a \*\*Hexagonal Architecture\*\* (Ports and Adapters) p
 | `reporting-service` | Materialized views for financial analytics and EOM reports. | ClickHouse (OLAP) |
 
 
-
 ---
-
 
 
 \## 3. Transactional Workflows
@@ -71,9 +69,7 @@ The transition from an Order to a settled Invoice follows a choreographed saga p
 &nbsp;   - \*\*CREDIT\*\* Revenue Account.
 
 
-
 ---
-
 
 
 \## 4. Communication Patterns
