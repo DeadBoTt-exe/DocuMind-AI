@@ -8,6 +8,7 @@ The billing-service is responsible for invoice generation, tax calculation, disc
 
 
 
+
 \## Invoice Creation
 
 Invoices are created when an order reaches the COMPLETED state. Each invoice contains:
