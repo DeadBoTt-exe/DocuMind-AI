@@ -49,7 +49,7 @@ flowchart LR
 
 ### Clone the repository
 ```bash
-git clone https://github.com/<your-username>/engineering-docs-rag.git
+git clone https://github.com/DeadBoTt-exe/Document_RAG.git
 ```
 
 ### Create and activate a virtual environment
