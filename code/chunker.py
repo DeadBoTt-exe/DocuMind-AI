@@ -1,3 +1,10 @@
+"""
+Text chunking utilities.
+
+Splits the cleaned document text into semantically meaningful
+chunks with associated metadata
+"""
+
 from typing import List, Dict
 import uuid
 
@@ -8,8 +15,8 @@ def chunk_text(
     source_file: str,
     page: int,
     service: str,
-    max_chars: int = 800,  # Industry standard: 512-1000 tokens
-    overlap: int = 100,    # ~12.5% overlap for context continuity
+    max_chars: int = 2000, 
+    overlap: int = 200,    
 
 ) -> List[Dict]:
     chunks: List[Dict] = []
@@ -33,6 +40,6 @@ def chunk_text(
             }
         })
 
-        start = max(end - overlap, start + 1)  # Ensure forward progress to avoid infinite loop
+        start = max(end - overlap, start + 1)
 
     return chunks
