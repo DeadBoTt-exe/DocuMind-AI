@@ -1,3 +1,10 @@
+"""
+Embedding abstraction.
+
+Wraps SentenceTransformers to provide batched text embeddings
+for both document indexing and query-time retrieval.
+"""
+
 from sentence_transformers import SentenceTransformer
 from typing import List
 import numpy as np
