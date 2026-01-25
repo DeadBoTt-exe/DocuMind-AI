@@ -1,3 +1,9 @@
+"""
+Text cleaning.
+
+Removes boilerplate, formatting artifacts, and noisy sections
+from raw document text before chunking and embedding.
+"""
 import re
 
 AWS_HEADER_PATTERNS = [
