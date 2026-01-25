@@ -1,3 +1,10 @@
+"""
+Document ingestion pipeline.
+
+Loads source documents (PDFs), extracts and cleans text,
+and prepares structured chunks for offline indexing.
+"""
+
 from pathlib import Path
 from typing import List, Dict
 import fitz
