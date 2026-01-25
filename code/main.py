@@ -1,5 +1,11 @@
-from contextlib import asynccontextmanager
+"""
+Application entrypoint.
 
+Starts the FastAPI server and exposes the RAG query endpoint
+backed by Qdrant, Gemini, and a custom validation layer.
+"""
+
+from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from pydantic import BaseModel
 
