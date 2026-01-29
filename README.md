@@ -1,13 +1,4 @@
 # Engineering Docs RAG
-
-A production-style **Retrieval-Augmented Generation (RAG)** system
-for querying large engineering documentation using **semantic search**,  
-**grounded LLM generation**, and **evidence-based confidence scoring**.
-
-The project is designed to simulate an **internal enterprise documentation assistant**
-with a strong emphasis on correctness, transparency, and system design.
-
-
 ---
 
 ## Features
