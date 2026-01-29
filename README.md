@@ -22,34 +22,6 @@ with a strong emphasis on correctness, transparency, and system design.
 
 ---
 
-## System Architecture
-```mermaid
-flowchart LR
-    User[User Query] --> API[FastAPI]
-
-    API --> RAG[RAG Engine]
-
-    RAG -->|Embed Query| EMB[Embedding Model]
-    RAG -->|Search| FAISS[FAISS Vector Index]
-
-    FAISS -->|Top-K Chunks| RAG
-
-    RAG -->|Context + Prompt| LLM[Gemini 2.5 Flash]
-    LLM -->|Answer| RAG
-
-    RAG --> API
-    API --> User
-
-    subgraph Documents
-        DOCS[Markdown Docs]
-    end
-
-    DOCS -->|Chunk & Embed| FAISS
-
-```
-
----
-
 ## Setup Instructions
 
 ### Clone the repository
