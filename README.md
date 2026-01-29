@@ -1,4 +1,14 @@
 # Engineering Docs RAG
+
+---
+
+A production-style **Retrieval-Augmented Generation (RAG)** system
+for querying large engineering documentation using **semantic search**,  
+**grounded LLM generation**, and **evidence-based confidence scoring**.
+
+The project is designed to simulate an **internal enterprise documentation assistant**
+with a strong emphasis on correctness, transparency, and system design.
+
 ---
 
 ## Features
@@ -111,6 +121,10 @@ Exampele Query -
 DocuMind
 |
 ├── code/
+│   ├── routes/
+│       ├── __init__.py
+│       ├── health.py
+│       └── questions.py 
 │   ├── __init__.py
 │   ├── chunker.py
 │   ├── cleaner.py
@@ -120,7 +134,9 @@ DocuMind
 │   ├── ingest.py
 │   ├── validator.py
 │   ├── rag.py
-│   └── main.py  
+|   ├── logging_config.py
+│   ├── main.py
+|   └── prompts.py
 │
 ├── docs/
 │   ├── AWS SDKs and Tools - Reference Guide - aws-sdk-ref.pdf
