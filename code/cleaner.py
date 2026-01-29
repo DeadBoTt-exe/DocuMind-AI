@@ -1,15 +1,12 @@
-"""
-Text cleaning.
+"""Text cleaning: removes boilerplate and formatting artifacts from raw document text."""
 
-Removes boilerplate, formatting artifacts, and noisy sections
-from raw document text before chunking and embedding.
-"""
 import re
 
 AWS_HEADER_PATTERNS = [
     r"AWS Organizations User Guide",
     r"©\s*Amazon Web Services",
 ]
+
 
 def clean_text(text: str) -> str:
     for pattern in AWS_HEADER_PATTERNS:
