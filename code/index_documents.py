@@ -3,15 +3,16 @@
 from qdrant_client import QdrantClient
 from qdrant_client.models import Distance, PointStruct, VectorParams
 
+from code.config import settings
 from code.embeddings import EmbeddingModel
 from code.ingest import load_pdf_documents
-
-COLLECTION_NAME = "aws-org-docs"
-UPSERT_BATCH_SIZE = 64
 
 
 def main():
     print("Starting document indexing...")
+    print(f"  Collection : {settings.qdrant_collection}")
+    print(f"  Qdrant     : {settings.qdrant_host}:{settings.qdrant_port}")
+    print(f"  Embed model: {settings.embedding_model}")
 
     chunks = load_pdf_documents()
     texts = [c["text"] for c in chunks]
@@ -21,14 +22,14 @@ def main():
     embeddings = embedder.embed(texts)
     print(f"Generated embeddings with shape {embeddings.shape}")
 
-    client = QdrantClient(host="localhost", port=6333)
+    client = QdrantClient(host=settings.qdrant_host, port=settings.qdrant_port)
 
-    if not client.collection_exists(COLLECTION_NAME):
+    if not client.collection_exists(settings.qdrant_collection):
         client.create_collection(
-            collection_name=COLLECTION_NAME,
+            collection_name=settings.qdrant_collection,
             vectors_config=VectorParams(size=embeddings.shape[1], distance=Distance.COSINE),
         )
-        print(f"Created collection '{COLLECTION_NAME}'")
+        print(f"Created collection '{settings.qdrant_collection}'")
 
     points = []
     for emb, chunk in zip(embeddings, chunks):
@@ -40,9 +41,9 @@ def main():
             )
         )
 
-    for i in range(0, len(points), UPSERT_BATCH_SIZE):
-        batch = points[i : i + UPSERT_BATCH_SIZE]
-        client.upsert(collection_name=COLLECTION_NAME, points=batch)
+    for i in range(0, len(points), settings.index_upsert_batch_size):
+        batch = points[i : i + settings.index_upsert_batch_size]
+        client.upsert(collection_name=settings.qdrant_collection, points=batch)
         print(f"Upserted {i + len(batch)} / {len(points)} points")
 
     print(f"Indexed {len(points)} chunks into Qdrant")

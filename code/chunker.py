@@ -1,10 +1,11 @@
 """Sentence-boundary aware chunking with deterministic IDs for stable document identity."""
 
-import hashlib
 import uuid
 from typing import Dict, List
 
 import spacy
+
+from code.config import settings
 
 nlp = spacy.load("en_core_web_sm", disable=["ner", "parser", "tagger", "lemmatizer"])
 nlp.add_pipe("sentencizer")
@@ -23,45 +24,48 @@ def chunk_text(
     source_file: str,
     page: int,
     service: str,
-    max_chars: int = 2000,
-    overlap_sentences: int = 2,
+    max_chars: int | None = None,
+    overlap_sentences: int | None = None,
 ) -> List[Dict]:
+    max_chars = max_chars if max_chars is not None else settings.chunk_max_chars
+    overlap_sentences = overlap_sentences if overlap_sentences is not None else settings.chunk_overlap_sentences
+
     doc = nlp(text)
     sentences = [sent.text.strip() for sent in doc.sents if sent.text.strip()]
-    
+
     if not sentences:
         return []
-    
+
     chunks = []
-    current_chunk = []
+    current_chunk: List[str] = []
     current_length = 0
     offset = 0
-    
+
     for sent in sentences:
         if current_length + len(sent) > max_chars and current_chunk:
             chunk_text_content = " ".join(current_chunk)
-            
-            if len(chunk_text_content) >= 100:
+
+            if len(chunk_text_content) >= settings.chunk_min_chars:
                 chunks.append({
                     "id": generate_chunk_id(source_file, page, offset),
                     "text": chunk_text_content,
-                    "metadata": {"file": source_file, "page": page, "service": service}
+                    "metadata": {"file": source_file, "page": page, "service": service},
                 })
                 offset += 1
-            
+
             current_chunk = current_chunk[-overlap_sentences:] if overlap_sentences else []
             current_length = sum(len(s) for s in current_chunk)
-        
+
         current_chunk.append(sent)
         current_length += len(sent)
-    
+
     if current_chunk:
         chunk_text_content = " ".join(current_chunk)
-        if len(chunk_text_content) >= 100:
+        if len(chunk_text_content) >= settings.chunk_min_chars:
             chunks.append({
                 "id": generate_chunk_id(source_file, page, offset),
                 "text": chunk_text_content,
-                "metadata": {"file": source_file, "page": page, "service": service}
+                "metadata": {"file": source_file, "page": page, "service": service},
             })
-    
+
     return chunks

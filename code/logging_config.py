@@ -7,7 +7,8 @@ from functools import wraps
 from typing import Callable
 
 
-def setup_logging(level: int = logging.INFO):
+def setup_logging(level: int | str = logging.INFO):
+    """Configure root logger. Accepts a log level int or string (e.g. 'DEBUG')."""
     logging.basicConfig(
         level=level,
         format="%(asctime)s | %(name)s | %(levelname)s | %(message)s",
@@ -16,9 +17,10 @@ def setup_logging(level: int = logging.INFO):
 
 
 def log_latency(operation_name: str):
+    """Decorator that logs execution time for both sync and async functions."""
     def decorator(func: Callable):
         logger = logging.getLogger(func.__module__)
-        
+
         @wraps(func)
         async def async_wrapper(*args, **kwargs):
             start = time.perf_counter()
@@ -31,7 +33,7 @@ def log_latency(operation_name: str):
                 latency_ms = (time.perf_counter() - start) * 1000
                 logger.error(f"{operation_name} | latency_ms={latency_ms:.2f} | status=error | error={e}")
                 raise
-        
+
         @wraps(func)
         def sync_wrapper(*args, **kwargs):
             start = time.perf_counter()
@@ -44,40 +46,9 @@ def log_latency(operation_name: str):
                 latency_ms = (time.perf_counter() - start) * 1000
                 logger.error(f"{operation_name} | latency_ms={latency_ms:.2f} | status=error | error={e}")
                 raise
-        
+
         if asyncio.iscoroutinefunction(func):
             return async_wrapper
         return sync_wrapper
-    
+
     return decorator
-
-
-class QueryMetrics:
-    def __init__(self):
-        self.total_queries = 0
-        self.successful_queries = 0
-        self.failed_queries = 0
-        self.validation_failures = 0
-        self.total_latency_ms = 0.0
-    
-    def record_query(self, success: bool, latency_ms: float, validation_passed: bool):
-        self.total_queries += 1
-        self.total_latency_ms += latency_ms
-        
-        if success:
-            self.successful_queries += 1
-        else:
-            self.failed_queries += 1
-        
-        if not validation_passed:
-            self.validation_failures += 1
-    
-    def get_stats(self) -> dict:
-        avg_latency = self.total_latency_ms / self.total_queries if self.total_queries > 0 else 0
-        return {
-            "total_queries": self.total_queries,
-            "successful_queries": self.successful_queries,
-            "failed_queries": self.failed_queries,
-            "validation_failures": self.validation_failures,
-            "avg_latency_ms": round(avg_latency, 2),
-        }

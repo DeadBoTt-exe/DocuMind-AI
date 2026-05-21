@@ -1,25 +1,33 @@
-# For APIs
-fastapi
-uvicorn
+# Runtime dependencies — DO NOT edit by hand.
+# Source of truth is pyproject.toml [project.dependencies].
+#
+# Used by: Dockerfile (production image)
+# Python: 3.12
 
-# Environment variables
-python-dotenv
+# Web framework
+fastapi==0.115.5
+uvicorn[standard]==0.32.1
+starlette==0.41.3
 
-# LLM (Gemini)
-google-genai
+# Data validation
+pydantic==2.10.3
+pydantic-settings==2.6.1
 
-# Vector DB
-qdrant-client
+# Vector store
+qdrant-client==1.12.1
 
 # Embeddings
-sentence-transformers
-torch
+sentence-transformers==3.3.1
+numpy==1.26.4
 
-# Validation
-langchain
-langchain-google-genai
+# LLM client — single SDK for both generation and validation
+google-genai==0.8.0
 
-# Data processing
-numpy
-tqdm
-PyMuPDF
+# NLP
+spacy==3.8.3
+
+# PDF ingestion
+pymupdf==1.24.14
+
+# Utilities
+python-dotenv==1.0.1

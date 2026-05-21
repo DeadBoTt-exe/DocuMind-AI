@@ -1,11 +1,16 @@
 """FastAPI application entrypoint with RAG engine lifecycle management."""
 
 from contextlib import asynccontextmanager
+
 from fastapi import FastAPI
 from fastapi.responses import RedirectResponse
 
+from code.config import settings
+from code.logging_config import setup_logging
 from code.rag import RAGEngine
-from code.routes import health_router, questions_router
+from code.routes import health_router, metrics_router, questions_router
+
+setup_logging(settings.log_level)
 
 
 @asynccontextmanager
@@ -19,6 +24,7 @@ app = FastAPI(title="DocuMind RAG", lifespan=lifespan)
 
 app.include_router(health_router)
 app.include_router(questions_router)
+app.include_router(metrics_router)
 
 
 @app.get("/")

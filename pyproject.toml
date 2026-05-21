@@ -1,0 +1,105 @@
+[build-system]
+requires = ["setuptools>=72.0", "wheel"]
+build-backend = "setuptools.backends.legacy:build"
+
+[project]
+name = "documind-rag"
+version = "0.1.0"
+description = "Document-grounded RAG API for AWS Organizations documentation"
+requires-python = ">=3.12,<3.13"
+
+# ── Runtime dependencies ──────────────────────────────────────────────────────
+# Pinned with == for reproducible Cloud Run builds.
+# To upgrade: change the version, run `pip-compile`, re-run the test suite,
+# then rebuild and push the image. Never bump multiple packages at once.
+dependencies = [
+    # Web framework
+    "fastapi==0.115.5",
+    "uvicorn[standard]==0.32.1",       # [standard] pulls in httptools + uvloop
+    "starlette==0.41.3",               # FastAPI pins this; explicit so bumps are visible
+
+    # Data validation
+    "pydantic==2.10.3",
+    "pydantic-settings==2.6.1",        # Phase 1: BaseSettings for config.py
+
+    # Vector store client
+    # NOTE: pin to 1.x — qdrant-client 2.x is a breaking API rewrite
+    "qdrant-client==1.12.1",
+
+    # Embedding model
+    # sentence-transformers pulls torch; the CPU-only wheel is ~700 MB.
+    # We bake it into the Docker image at build time to avoid cold-start timeouts.
+    "sentence-transformers==3.3.1",
+    "numpy==1.26.4",                   # Must stay on 1.x — ST 3.x is not tested on numpy 2
+
+    # LLM clients
+    "google-genai==0.8.0",             # Gemini generation (RAGEngine)
+    "langchain-google-genai==2.0.7",   # Gemini validation (GroundingValidator)
+    "langchain-core==0.3.24",          # Pinned explicitly; langchain-google-genai pegs this loosely
+
+    # NLP / chunking
+    "spacy==3.8.3",
+    # The en_core_web_sm model is NOT a pip package — install it separately:
+    #   python -m spacy download en_core_web_sm
+    # In Docker: RUN python -m spacy download en_core_web_sm
+
+    # PDF ingestion
+    "pymupdf==1.24.14",               # fitz import — do not use PyMuPDF alias, same package
+
+    # Utilities
+    "python-dotenv==1.0.1",
+]
+
+# ── Optional / dev dependencies ───────────────────────────────────────────────
+[project.optional-dependencies]
+dev = [
+    # Testing
+    "pytest==8.3.4",
+    "pytest-asyncio==0.24.0",
+    "pytest-mock==3.14.0",
+    "httpx==0.28.1",                   # ASGI test client for FastAPI (TestClient replacement)
+
+    # Type checking
+    "mypy==1.13.0",
+    "types-requests==2.32.0.20241016",
+
+    # Linting / formatting
+    "ruff==0.8.3",
+
+    # Eval harness extras
+    "rich==13.9.4",                    # Pretty eval output tables
+]
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["code*"]
+
+# ── Pytest config ─────────────────────────────────────────────────────────────
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+asyncio_mode = "auto"                  # pytest-asyncio: no @pytest.mark.asyncio needed
+addopts = "-v --tb=short"
+
+# ── Ruff (linter) config ──────────────────────────────────────────────────────
+[tool.ruff]
+target-version = "py312"
+line-length = 100
+
+[tool.ruff.lint]
+select = [
+    "E",   # pycodestyle errors
+    "F",   # pyflakes
+    "I",   # isort
+    "UP",  # pyupgrade
+    "B",   # flake8-bugbear — catches real bugs, e.g. mutable default args
+    "RUF", # ruff-specific rules
+]
+ignore = [
+    "E501", # line too long — ruff format handles this
+]
+
+# ── Mypy config ───────────────────────────────────────────────────────────────
+[tool.mypy]
+python_version = "3.12"
+strict = false                         # Start permissive; tighten per-module as coverage grows
+ignore_missing_imports = true          # sentence-transformers has no stubs
