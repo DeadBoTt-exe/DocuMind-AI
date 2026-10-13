@@ -58,6 +58,10 @@ class Question(BaseModel):
         stripped = v.strip()
         if not stripped:
             raise ValueError("question must not be blank or whitespace-only")
+        if len(stripped) < MIN_QUESTION_CHARS:
+            raise ValueError(
+                f"question must be at least {MIN_QUESTION_CHARS} characters after trimming"
+            )
         return stripped
 
 
