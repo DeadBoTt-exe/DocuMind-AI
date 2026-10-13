@@ -11,7 +11,7 @@ from code.ingest import load_pdf_documents
 def main():
     print("Starting document indexing...")
     print(f"  Collection : {settings.qdrant_collection}")
-    print(f"  Qdrant     : {settings.qdrant_host}:{settings.qdrant_port}")
+    print(f"  Qdrant     : {settings.qdrant_url or f'{settings.qdrant_host}:{settings.qdrant_port}'}")
     print(f"  Embed model: {settings.embedding_model}")
 
     chunks = load_pdf_documents()
@@ -22,7 +22,7 @@ def main():
     embeddings = embedder.embed(texts)
     print(f"Generated embeddings with shape {embeddings.shape}")
 
-    client = QdrantClient(host=settings.qdrant_host, port=settings.qdrant_port)
+    client = QdrantClient(**settings.qdrant_connection)
 
     if not client.collection_exists(settings.qdrant_collection):
         client.create_collection(

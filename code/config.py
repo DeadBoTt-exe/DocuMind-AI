@@ -43,6 +43,9 @@ class Settings(BaseSettings):
     qdrant_host: str = Field(default="localhost")
     qdrant_port: int = Field(default=6333)
     qdrant_collection: str = Field(default="aws-org-docs")
+    # Hosted Qdrant (e.g. Qdrant Cloud). When qdrant_url is set it wins over host/port.
+    qdrant_url: str | None = Field(default=None)
+    qdrant_api_key: str | None = Field(default=None)
 
     # ── Embedding model ───────────────────────────────────────────────────────
     embedding_model: str = Field(
@@ -86,6 +89,13 @@ class Settings(BaseSettings):
 
     # ── Logging ───────────────────────────────────────────────────────────────
     log_level: str = Field(default="INFO")
+
+    @property
+    def qdrant_connection(self) -> dict:
+        """kwargs for QdrantClient / AsyncQdrantClient (hosted URL wins over host/port)."""
+        if self.qdrant_url:
+            return {"url": self.qdrant_url, "api_key": self.qdrant_api_key or None}
+        return {"host": self.qdrant_host, "port": self.qdrant_port}
 
     @field_validator("log_level")
     @classmethod

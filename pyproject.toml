@@ -1,6 +1,6 @@
 [build-system]
 requires = ["setuptools>=72.0", "wheel"]
-build-backend = "setuptools.backends.legacy:build"
+build-backend = "setuptools.build_meta"
 
 [project]
 name = "documind-rag"
@@ -34,8 +34,6 @@ dependencies = [
 
     # LLM clients
     "google-genai==0.8.0",             # Gemini generation (RAGEngine)
-    "langchain-google-genai==2.0.7",   # Gemini validation (GroundingValidator)
-    "langchain-core==0.3.24",          # Pinned explicitly; langchain-google-genai pegs this loosely
 
     # NLP / chunking
     "spacy==3.8.3",

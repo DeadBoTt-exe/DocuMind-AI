@@ -36,14 +36,8 @@ class RAGEngine:
         self.validator = GroundingValidator(metrics=self.metrics)
         self.confidence_scorer = ConfidenceScorer()
 
-        self._sync_qdrant = QdrantClient(
-            host=settings.qdrant_host,
-            port=settings.qdrant_port,
-        )
-        self.qdrant = AsyncQdrantClient(
-            host=settings.qdrant_host,
-            port=settings.qdrant_port,
-        )
+        self._sync_qdrant = QdrantClient(**settings.qdrant_connection)
+        self.qdrant = AsyncQdrantClient(**settings.qdrant_connection)
 
         collections = [c.name for c in self._sync_qdrant.get_collections().collections]
         if settings.qdrant_collection not in collections:

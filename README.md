@@ -56,6 +56,9 @@ pip install -r requirements.txt
 Create a .env file in the project root:
 ```bash
 GEMINI_API_KEY=your_api_key_here
+# Optional - use a hosted Qdrant (e.g. Qdrant Cloud) instead of localhost:
+# QDRANT_URL=https://<your-cluster>.cloud.qdrant.io:6333
+# QDRANT_API_KEY=your_qdrant_key
 ```
 ---
 
@@ -85,7 +88,7 @@ This step:
 
 Run the API:
 ```bash
-python -m code.main
+uvicorn code.main:app --host 127.0.0.1 --port 8000
 ```
 It will be here - 
 ```bash
