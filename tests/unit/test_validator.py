@@ -30,20 +30,20 @@ async def test_async_valid(v, monkeypatch):
     assert (await v.validate_async(question="q", answer="a", context="c"))["is_valid"] is True
 
 
-async def test_llm_error_currently_fails_open(v, monkeypatch):
+async def test_llm_error_fails_closed(v, monkeypatch):
     def boom(p):
         raise RuntimeError("quota")
     monkeypatch.setattr(v, "_call_llm", boom)
     r = await v.validate_async(question="q", answer="a", context="c")
-    assert r["is_valid"] is True and r["skipped"] is True  # documents CURRENT behaviour
+    assert r["is_valid"] is False and r["skipped"] is True
 
 
-async def test_timeout_currently_fails_open(v, monkeypatch):
+async def test_timeout_fails_closed(v, monkeypatch):
     import code.validator as mod
     monkeypatch.setattr(mod.settings, "validation_timeout_seconds", 0.05)
     monkeypatch.setattr(v, "_call_llm", lambda p: time.sleep(0.3) or "VALID")
     r = await v.validate_async(question="q", answer="a", context="c")
-    assert r["is_valid"] is True and r.get("timeout") is True
+    assert r["is_valid"] is False and r["skipped"] is True and r.get("timeout") is True
 
 
 async def test_circuit_opens_after_max_failures_then_skips(v, monkeypatch):
@@ -55,6 +55,7 @@ async def test_circuit_opens_after_max_failures_then_skips(v, monkeypatch):
     assert v.circuit_open is True and v._metrics.circuit_open_count == 1
     r = await v.validate_async(question="q", answer="a", context="c")
     assert r["circuit_open"] is True
+    assert r["is_valid"] is False and r["skipped"] is True  # open circuit must not wave answers through
 
 
 async def test_success_resets_failure_count(v, monkeypatch):
@@ -76,3 +77,17 @@ def test_reset_circuit(v):
     v._failure_count = 9
     v.reset_circuit()
     assert v.circuit_open is False and v._failure_count == 0
+
+
+def test_sync_llm_error_fails_closed(v, monkeypatch):
+    def boom(p):
+        raise RuntimeError("quota")
+    monkeypatch.setattr(v, "_call_llm", boom)
+    r = v.validate(question="q", answer="a", context="c")
+    assert r["is_valid"] is False and r["skipped"] is True
+
+
+def test_sync_circuit_open_fails_closed(v):
+    v._circuit_open = True
+    r = v.validate(question="q", answer="a", context="c")
+    assert r["is_valid"] is False and r["skipped"] is True and r["circuit_open"] is True

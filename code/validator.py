@@ -1,5 +1,9 @@
 """Grounding validation with circuit breaker for resilience.
 
+Fails CLOSED: if validation cannot run (error, timeout, or circuit open) the answer is
+reported as not validated, with skipped=True so callers can tell "could not check"
+apart from "checked and unsupported".
+
 Uses google.genai directly (same client as RAGEngine).
 Notifies a QueryMetrics instance on circuit state changes so the
 /metrics endpoint reflects real-time validator health.
@@ -79,7 +83,7 @@ class GroundingValidator:
         if self._circuit_open:
             logger.warning("Validation circuit open, skipping validation")
             return {
-                "is_valid": True,
+                "is_valid": False,
                 "reason": "Validation skipped (circuit open)",
                 "circuit_open": True,
                 "skipped": True,
@@ -102,8 +106,8 @@ class GroundingValidator:
             logger.error(f"Validation timeout | failures={self._failure_count}")
             self._maybe_open_circuit()
             return {
-                "is_valid": True,
-                "reason": "Validation timeout, answer accepted",
+                "is_valid": False,
+                "reason": "Validation timed out",
                 "timeout": True,
                 "skipped": True,
             }
@@ -113,7 +117,7 @@ class GroundingValidator:
             logger.error(f"Validation error: {e} | failures={self._failure_count}")
             self._maybe_open_circuit()
             return {
-                "is_valid": True,
+                "is_valid": False,
                 "reason": f"Validation error: {str(e)}",
                 "error": True,
                 "skipped": True,
@@ -122,7 +126,7 @@ class GroundingValidator:
     def validate(self, *, question: str, answer: str, context: str) -> dict:
         if self._circuit_open:
             return {
-                "is_valid": True,
+                "is_valid": False,
                 "reason": "Validation skipped (circuit open)",
                 "circuit_open": True,
                 "skipped": True,
@@ -142,7 +146,7 @@ class GroundingValidator:
             logger.error(f"Validation error: {e}")
             self._maybe_open_circuit()
             return {
-                "is_valid": True,
+                "is_valid": False,
                 "reason": f"Validation error: {str(e)}",
                 "error": True,
                 "skipped": True,

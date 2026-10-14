@@ -70,6 +70,7 @@ class Question(BaseModel):
 class ValidationDetail(BaseModel):
     is_valid: bool
     reason: str | None = None
+    skipped: bool = False  # True = validator could not run (error/timeout/circuit open)
 
 
 class AskResponse(BaseModel):

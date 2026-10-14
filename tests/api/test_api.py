@@ -13,6 +13,11 @@ class FakeRAG:
     async def ask_async(self, question, top_k=None):
         if self.mode == "down":
             raise RuntimeError("Qdrant collection 'x' not found.")
+        if self.mode == "skipped":
+            return {"answer": "The answer could not be confidently validated against the documentation.",
+                    "sources": ["a.pdf#page-1"],
+                    "validation": {"is_valid": False, "reason": "Validation timed out", "skipped": True},
+                    "confidence": 0.0}
         if self.mode == "invalid":
             return {"answer": "The answer could not be confidently validated against the documentation.",
                     "sources": ["a.pdf#page-1"],
@@ -77,3 +82,14 @@ def test_metrics_shape(client):
 
 def test_openapi_lists_routes(client):
     assert {"/health", "/ask", "/metrics"} <= set(client.get("/openapi.json").json()["paths"])
+
+
+def test_ask_exposes_validation_skipped(client):
+    client.fake.mode = "skipped"
+    v = client.post("/ask", json={"question": "What is an SCP?"}).json()["validation"]
+    assert v["is_valid"] is False and v["skipped"] is True
+
+
+def test_ask_skipped_defaults_false_when_validated(client):
+    v = client.post("/ask", json={"question": "What is an SCP?"}).json()["validation"]
+    assert v["skipped"] is False
