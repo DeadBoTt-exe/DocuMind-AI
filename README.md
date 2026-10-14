@@ -17,7 +17,7 @@ with a strong emphasis on correctness, transparency, and system design.
 - Offline embedding and indexing into Qdrant
 - Semantic vector search at query time
 - Gemini powered answer generation
-- Deterministic grounding validation to reject hallucinations
+- LLM-based grounding validation (Gemini, temperature 0) that rejects answers not supported by the retrieved context; fails closed (answer withheld, `validation.skipped: true`) if the validator is unavailable
 - Evidence-based confidence scoring for answers
 - Secure API key management via environment variables
 
@@ -114,7 +114,7 @@ Exampele Query -
 - Vector DB: Qdrant
 - Embeddings: Sentence Transformers 
 - API: FastAPI
-- Validation: Custom logic with selective LangChain usage
+- Validation: Gemini-based grounding check with a circuit breaker
 
 ---
 
