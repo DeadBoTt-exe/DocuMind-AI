@@ -18,6 +18,37 @@ def generate_chunk_id(file: str, page: int, offset: int) -> str:
     return str(uuid.uuid5(NAMESPACE_DOCUMIND, content))
 
 
+def _joined_len(parts: List[str]) -> int:
+    """Length of " ".join(parts) without building the string."""
+    return sum(map(len, parts)) + max(len(parts) - 1, 0)
+
+
+def _split_oversized(sentence: str, max_chars: int) -> List[str]:
+    """Split one over-long sentence on whitespace into pieces of at most max_chars."""
+    if len(sentence) <= max_chars:
+        return [sentence]
+
+    parts: List[str] = []
+    buf: List[str] = []
+    n = 0
+    for word in sentence.split():
+        while len(word) > max_chars:  # pathological unbroken token: hard-slice it
+            if buf:
+                parts.append(" ".join(buf))
+                buf, n = [], 0
+            parts.append(word[:max_chars])
+            word = word[max_chars:]
+        add = len(word) + (1 if buf else 0)
+        if buf and n + add > max_chars:
+            parts.append(" ".join(buf))
+            buf, n, add = [], 0, len(word)
+        buf.append(word)
+        n += add
+    if buf:
+        parts.append(" ".join(buf))
+    return parts
+
+
 def chunk_text(
     text: str,
     *,
@@ -36,13 +67,16 @@ def chunk_text(
     if not sentences:
         return []
 
+    # A single "sentence" can be huge (diagram labels, tables, JSON with no sentence
+    # punctuation). Split those first so no chunk can exceed max_chars.
+    sentences = [part for sent in sentences for part in _split_oversized(sent, max_chars)]
+
     chunks = []
     current_chunk: List[str] = []
-    current_length = 0
     offset = 0
 
     for sent in sentences:
-        if current_length + len(sent) > max_chars and current_chunk:
+        if current_chunk and _joined_len(current_chunk) + 1 + len(sent) > max_chars:
             chunk_text_content = " ".join(current_chunk)
 
             if len(chunk_text_content) >= settings.chunk_min_chars:
@@ -54,10 +88,11 @@ def chunk_text(
                 offset += 1
 
             current_chunk = current_chunk[-overlap_sentences:] if overlap_sentences else []
-            current_length = sum(len(s) for s in current_chunk)
+            # Overlap must never push the next chunk over the limit.
+            while current_chunk and _joined_len(current_chunk) + 1 + len(sent) > max_chars:
+                current_chunk.pop(0)
 
         current_chunk.append(sent)
-        current_length += len(sent)
 
     if current_chunk:
         chunk_text_content = " ".join(current_chunk)

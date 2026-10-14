@@ -220,3 +220,35 @@ class TestChunkTextEdgeCases:
             assert chunk["metadata"]["file"] == "myfile.pdf"
             assert chunk["metadata"]["page"] == 7
             assert chunk["metadata"]["service"] == "svc-x"
+
+class TestChunkTextSizeCap:
+    """No chunk may exceed max_chars (34 chunks of up to 5,326 chars exceeded it on the real PDF)."""
+
+    def test_oversized_single_sentence_is_split(self):
+        text = " ".join(f"word{i}" for i in range(400))  # one sentence, no punctuation, ~2800 chars
+        result = chunk_text(text, source_file="doc.pdf", page=1, service="aws", max_chars=500)
+        assert len(result) > 1
+        assert all(len(c["text"]) <= 500 for c in result)
+
+    def test_oversized_split_preserves_every_word(self):
+        words = [f"word{i}" for i in range(400)]
+        result = chunk_text(" ".join(words), source_file="doc.pdf", page=1, service="aws",
+                            max_chars=500, overlap_sentences=0)
+        assert " ".join(c["text"] for c in result).split() == words
+
+    def test_unbroken_token_longer_than_max_is_sliced(self):
+        result = chunk_text("x" * 1200, source_file="doc.pdf", page=1, service="aws",
+                            max_chars=500, overlap_sentences=0)
+        assert len(result) == 3 and all(len(c["text"]) <= 500 for c in result)
+
+    def test_overlap_never_pushes_chunk_over_limit(self):
+        sents = [("S%d " % i) + "a" * 140 + "." for i in range(12)]
+        result = chunk_text(" ".join(sents), source_file="doc.pdf", page=1, service="aws",
+                            max_chars=350, overlap_sentences=2)
+        assert len(result) > 2
+        assert all(len(c["text"]) <= 350 for c in result)
+
+    def test_chunk_ids_still_unique_after_splitting(self):
+        text = " ".join(f"word{i}" for i in range(400))
+        result = chunk_text(text, source_file="doc.pdf", page=1, service="aws", max_chars=500)
+        assert len({c["id"] for c in result}) == len(result)

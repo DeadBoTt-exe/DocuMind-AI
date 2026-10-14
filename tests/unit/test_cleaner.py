@@ -145,3 +145,30 @@ class TestCleanTextCombined:
         once = clean_text(raw)
         twice = clean_text(once)
         assert once == twice
+
+class TestCleanTextRealPdfFormats:
+    """Formats observed in the real AWS PDF; the single-line header tests above never covered these."""
+
+    def test_strips_header_split_across_lines(self):
+        result = clean_text("AWS Organizations\nUser Guide\n * Example 4: policies\nBody text.")
+        assert "User Guide" not in result and "AWS Organizations" not in result
+        assert "Body text" in result
+
+    def test_strips_header_with_colon_variant(self):
+        assert "User Guide" not in clean_text("AWS Organizations: User Guide\nBody.")
+
+    def test_strips_copyright_with_year(self):
+        result = clean_text("Copyright \u00a9 2026 Amazon Web Services, Inc.\nBody.")
+        assert "2026 Amazon Web Services" not in result
+
+    def test_keeps_legitimate_mentions_of_the_service_name(self):
+        text = "For SDK downloads, see Tools for Amazon Web Services."
+        assert "Tools for Amazon Web Services" in clean_text(text)
+
+    def test_strips_repeated_tag_policy_table_header(self):
+        header = ("Basic Compliance \n Rules\n Required Tag Keys\n Service\nTag \n Policies \n JSON \n syntax\n "
+                  "CloudForm \n ation \n Alias\n Reporting \n Mode\n Enforceme \n nt Mode\n Reporting \n Mode\n "
+                  "Enforce \n for IaC\n")
+        result = clean_text(header + "iot:thing group Yes No")
+        assert "Required Tag Keys" not in result and "CloudForm" not in result
+        assert "iot:thing group" in result
