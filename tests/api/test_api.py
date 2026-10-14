@@ -1,3 +1,5 @@
+from types import SimpleNamespace
+
 import pytest
 from fastapi.testclient import TestClient
 
@@ -5,12 +7,25 @@ import code.main as main
 from code.metrics import QueryMetrics
 
 
+class FakeQdrant:
+    def __init__(self):
+        self.fail = False
+
+    async def get_collection(self, name):
+        if self.fail:
+            raise RuntimeError("secret internal detail: https://x.cloud.qdrant.io key=abc")
+        return SimpleNamespace(points_count=1358)
+
+
 class FakeRAG:
     def __init__(self):
         self.metrics = QueryMetrics()
         self.mode = "ok"
+        self.qdrant = FakeQdrant()
+        self.asks = 0
 
     async def ask_async(self, question, top_k=None):
+        self.asks += 1
         if self.mode == "down":
             raise RuntimeError("Qdrant collection 'x' not found.")
         if self.mode == "skipped":
@@ -93,3 +108,22 @@ def test_ask_exposes_validation_skipped(client):
 def test_ask_skipped_defaults_false_when_validated(client):
     v = client.post("/ask", json={"question": "What is an SCP?"}).json()["validation"]
     assert v["skipped"] is False
+
+
+def test_keepalive_reads_qdrant_without_calling_gemini(client):
+    r = client.get("/health/qdrant")
+    assert r.status_code == 200
+    assert r.json() == {"status": "ok", "qdrant": "ok", "points": 1358}
+    assert client.fake.asks == 0  # no RAG/Gemini call
+
+
+def test_keepalive_503_hides_internal_error_detail(client):
+    client.fake.qdrant.fail = True
+    r = client.get("/health/qdrant")
+    assert r.status_code == 503
+    assert r.json() == {"detail": "Qdrant unreachable"}
+    assert "secret" not in r.text and "qdrant.io" not in r.text
+
+
+def test_keepalive_listed_in_openapi(client):
+    assert "/health/qdrant" in client.get("/openapi.json").json()["paths"]

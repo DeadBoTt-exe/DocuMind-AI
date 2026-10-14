@@ -59,6 +59,7 @@ GEMINI_API_KEY=your_api_key_here
 # Optional - use a hosted Qdrant (e.g. Qdrant Cloud) instead of localhost:
 # QDRANT_URL=https://<your-cluster>.cloud.qdrant.io:6333
 # QDRANT_API_KEY=your_qdrant_key
+# (see .env.example; keys belong in .env, never in code)
 ```
 ---
 
@@ -94,6 +95,10 @@ It will be here -
 ```bash
 http://127.0.0.1:8000
 ```
+Keep-alive for hosted (free) Qdrant clusters, which are suspended after a week idle:
+`GET /health/qdrant` reads from Qdrant without calling Gemini. Point a scheduler or uptime monitor at it.
+If a cluster is ever deleted, re-run `python -m code.index_documents` to rebuild the index.
+
 Interactive docs will be here:
 ```bash
 http://127.0.0.1:8000/docs
