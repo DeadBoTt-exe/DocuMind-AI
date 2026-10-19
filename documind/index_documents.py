@@ -24,7 +24,19 @@ def main():
 
     client = QdrantClient(**settings.qdrant_connection)
 
-    if not client.collection_exists(settings.qdrant_collection):
+    try:
+        exists = client.collection_exists(settings.qdrant_collection)
+    except Exception as e:
+        target = settings.qdrant_url or f"{settings.qdrant_host}:{settings.qdrant_port}"
+        raise RuntimeError(
+            f"Failed to connect to Qdrant at {target}: {e}\n"
+            "Please check:\n"
+            "  1. Is QDRANT_URL correct? (e.g., https://<cluster-id>.<region>.gcp.cloud.qdrant.io:6333)\n"
+            "  2. Is QDRANT_API_KEY set and valid for Qdrant Cloud?\n"
+            "  3. If running locally, is Docker or the Qdrant service started?"
+        ) from e
+
+    if not exists:
         client.create_collection(
             collection_name=settings.qdrant_collection,
             vectors_config=VectorParams(size=embeddings.shape[1], distance=Distance.COSINE),
