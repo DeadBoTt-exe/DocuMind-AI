@@ -3,7 +3,7 @@
 import logging
 
 from fastapi import APIRouter, Depends, HTTPException, Request
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 from code.config import settings
 from code.rag import RAGEngine
@@ -27,6 +27,12 @@ MIN_QUESTION_CHARS = 3
 # ── Request model ─────────────────────────────────────────────────────────────
 
 class Question(BaseModel):
+    # Without this, Swagger "Try it out" pre-fills top_k with a value (1), which silently
+    # caps answers at one chunk and confidence at ~0.76 for anyone testing via /docs.
+    model_config = ConfigDict(json_schema_extra={
+        "examples": [{"question": "What is a service control policy in AWS Organizations?"}]
+    })
+
     question: str = Field(
         ...,
         min_length=MIN_QUESTION_CHARS,

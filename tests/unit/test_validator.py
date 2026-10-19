@@ -91,3 +91,18 @@ def test_sync_circuit_open_fails_closed(v):
     v._circuit_open = True
     r = v.validate(question="q", answer="a", context="c")
     assert r["is_valid"] is False and r["skipped"] is True and r["circuit_open"] is True
+
+
+async def test_error_reason_does_not_leak_exception_text(v, monkeypatch):
+    def boom(p):
+        raise RuntimeError("secret-token-123")
+    monkeypatch.setattr(v, "_call_llm", boom)
+    r = await v.validate_async(question="q", answer="a", context="c")
+    assert "secret-token-123" not in str(r)
+
+
+def test_sync_error_reason_does_not_leak_exception_text(v, monkeypatch):
+    def boom(p):
+        raise RuntimeError("secret-token-123")
+    monkeypatch.setattr(v, "_call_llm", boom)
+    assert "secret-token-123" not in str(v.validate(question="q", answer="a", context="c"))

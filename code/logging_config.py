@@ -14,6 +14,9 @@ def setup_logging(level: int | str = logging.INFO):
         format="%(asctime)s | %(name)s | %(levelname)s | %(message)s",
         datefmt="%Y-%m-%d %H:%M:%S",
     )
+    # httpx logs every request URL at INFO, which floods logs and exposes the cluster host.
+    for noisy in ("httpx", "httpcore"):
+        logging.getLogger(noisy).setLevel(logging.WARNING)
 
 
 def log_latency(operation_name: str):

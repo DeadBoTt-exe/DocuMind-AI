@@ -127,3 +127,9 @@ def test_keepalive_503_hides_internal_error_detail(client):
 
 def test_keepalive_listed_in_openapi(client):
     assert "/health/qdrant" in client.get("/openapi.json").json()["paths"]
+
+
+def test_openapi_question_example_has_no_top_k(client):
+    """Swagger pre-filled top_k=1 for anyone testing via /docs; the example body must omit it."""
+    examples = client.get("/openapi.json").json()["components"]["schemas"]["Question"]["examples"]
+    assert examples and all("top_k" not in e for e in examples)

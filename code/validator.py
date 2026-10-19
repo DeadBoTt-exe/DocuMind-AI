@@ -118,7 +118,7 @@ class GroundingValidator:
             self._maybe_open_circuit()
             return {
                 "is_valid": False,
-                "reason": f"Validation error: {str(e)}",
+                "reason": "Validation could not run (error)",
                 "error": True,
                 "skipped": True,
             }
@@ -147,7 +147,7 @@ class GroundingValidator:
             self._maybe_open_circuit()
             return {
                 "is_valid": False,
-                "reason": f"Validation error: {str(e)}",
+                "reason": "Validation could not run (error)",
                 "error": True,
                 "skipped": True,
             }

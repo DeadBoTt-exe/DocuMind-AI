@@ -141,7 +141,7 @@ class RAGEngine:
             return {
                 "answer": LLM_ERROR_ANSWER,
                 "sources": sorted(sources),
-                "validation": {"is_valid": False, "reason": f"LLM error: {str(e)}"},
+                "validation": {"is_valid": False, "reason": "Answer generation failed"},
                 "confidence": 0.0,
             }
 
@@ -152,7 +152,7 @@ class RAGEngine:
             )
         except Exception as e:
             logger.error(f"Validation failed: {e}")
-            validation = {"is_valid": False, "reason": f"Validation error: {str(e)}"}
+            validation = {"is_valid": False, "reason": "Validation could not run"}
 
         # ── Score & record ─────────────────────────────────────────────────
         confidence = self.confidence_scorer.score(
@@ -265,7 +265,7 @@ class RAGEngine:
             return {
                 "answer": LLM_ERROR_ANSWER,
                 "sources": sorted(sources),
-                "validation": {"is_valid": False, "reason": f"LLM error: {str(e)}"},
+                "validation": {"is_valid": False, "reason": "Answer generation failed"},
                 "confidence": 0.0,
             }
 
@@ -273,7 +273,7 @@ class RAGEngine:
             validation = self.validator.validate(question=question, answer=answer, context=context)
         except Exception as e:
             logger.error(f"Validation failed: {e}")
-            validation = {"is_valid": False, "reason": f"Validation error: {str(e)}"}
+            validation = {"is_valid": False, "reason": "Validation could not run"}
 
         confidence = self.confidence_scorer.score(
             retrieval_scores=retrieval_scores,
