@@ -3,23 +3,22 @@
 import asyncio
 import logging
 import time
-from typing import Dict, List
 
 import google.genai as genai
 from qdrant_client import AsyncQdrantClient, QdrantClient
 
-from code.confidence import ConfidenceScorer
-from code.config import settings
-from code.embeddings import EmbeddingModel
-from code.logging_config import log_latency
-from code.metrics import QueryMetrics
-from code.prompts import (
+from documind.confidence import ConfidenceScorer
+from documind.config import settings
+from documind.embeddings import EmbeddingModel
+from documind.logging_config import log_latency
+from documind.metrics import QueryMetrics
+from documind.prompts import (
     DEFAULT_NO_ANSWER,
     LLM_ERROR_ANSWER,
     RAG_ANSWER_PROMPT,
     VALIDATION_FAILED_ANSWER,
 )
-from code.validator import GroundingValidator
+from documind.validator import GroundingValidator
 
 logger = logging.getLogger(__name__)
 
@@ -54,7 +53,7 @@ class RAGEngine:
         logger.info("RAGEngine resources closed")
 
     @log_latency("rag.ask_async")
-    async def ask_async(self, question: str, top_k: int | None = None) -> Dict:
+    async def ask_async(self, question: str, top_k: int | None = None) -> dict:
         top_k = top_k or settings.retrieval_top_k
         started = time.perf_counter()
         logger.info(f"Query received | question_length={len(question)}")
@@ -84,9 +83,9 @@ class RAGEngine:
                 "confidence": 0.0,
             }
 
-        context_chunks: List[str] = []
+        context_chunks: list[str] = []
         sources = set()
-        retrieval_scores: List[float] = []
+        retrieval_scores: list[float] = []
 
         for r in results:
             payload = r.payload or {}
@@ -190,7 +189,7 @@ class RAGEngine:
         }
 
     @log_latency("rag.ask")
-    def ask(self, question: str, top_k: int | None = None) -> Dict:
+    def ask(self, question: str, top_k: int | None = None) -> dict:
         """Synchronous path — kept for CLI/script use. Metrics recorded identically."""
         top_k = top_k or settings.retrieval_top_k
         started = time.perf_counter()
@@ -218,9 +217,9 @@ class RAGEngine:
                 "confidence": 0.0,
             }
 
-        context_chunks: List[str] = []
+        context_chunks: list[str] = []
         sources = set()
-        retrieval_scores: List[float] = []
+        retrieval_scores: list[float] = []
 
         for r in results:
             payload = r.payload or {}

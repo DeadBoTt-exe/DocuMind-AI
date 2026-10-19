@@ -1,7 +1,7 @@
 """Test configuration shared by every test directory.
 
 Env vars are set at import time (before any test module is collected), because
-code.config builds `settings` at import. QDRANT_URL/QDRANT_API_KEY are blanked so a
+documind.config builds `settings` at import. QDRANT_URL/QDRANT_API_KEY are blanked so a
 developer's real .env can never point tests at a hosted Qdrant.
 """
 

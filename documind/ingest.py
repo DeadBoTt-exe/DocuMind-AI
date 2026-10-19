@@ -2,12 +2,11 @@
 
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Dict, List, Optional
 
 import fitz
 
-from code.chunker import chunk_text
-from code.cleaner import clean_text
+from documind.chunker import chunk_text
+from documind.cleaner import clean_text
 
 
 @dataclass
@@ -28,11 +27,11 @@ def extract_text_fast(page) -> str:
     )
 
 
-def load_pdf_document(pdf_path: Path, service_name: str) -> List[Dict]:
+def load_pdf_document(pdf_path: Path, service_name: str) -> list[dict]:
     if not pdf_path.exists():
         raise FileNotFoundError(f"PDF not found: {pdf_path}")
 
-    all_chunks: List[Dict] = []
+    all_chunks: list[dict] = []
 
     with fitz.open(pdf_path) as doc:
         for page_index, page in enumerate(doc, start=1):
@@ -53,9 +52,9 @@ def load_pdf_document(pdf_path: Path, service_name: str) -> List[Dict]:
     return all_chunks
 
 
-def load_pdf_documents(sources: Optional[List[DocumentSource]] = None) -> List[Dict]:
+def load_pdf_documents(sources: list[DocumentSource] | None = None) -> list[dict]:
     sources = sources or DEFAULT_SOURCES
-    all_chunks: List[Dict] = []
+    all_chunks: list[dict] = []
     
     for source in sources:
         print(f"Processing: {source.path}")

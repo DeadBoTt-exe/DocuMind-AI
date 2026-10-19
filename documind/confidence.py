@@ -1,10 +1,9 @@
 """Confidence scoring based on retrieval relevance and validation results."""
 
-from typing import List
 
 
 class ConfidenceScorer:
-    def score(self, *, retrieval_scores: List[float], num_chunks: int, is_valid: bool) -> float:
+    def score(self, *, retrieval_scores: list[float], num_chunks: int, is_valid: bool) -> float:
         if not is_valid:
             return 0.0
 

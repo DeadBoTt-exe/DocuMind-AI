@@ -16,11 +16,11 @@ from typing import TYPE_CHECKING
 import google.genai as genai
 import google.genai.types as genai_types
 
-from code.config import settings
-from code.prompts import GROUNDING_VALIDATION_PROMPT
+from documind.config import settings
+from documind.prompts import GROUNDING_VALIDATION_PROMPT
 
 if TYPE_CHECKING:
-    from code.metrics import QueryMetrics
+    from documind.metrics import QueryMetrics
 
 logger = logging.getLogger(__name__)
 
@@ -101,7 +101,7 @@ class GroundingValidator:
             logger.info(f"Validation complete | is_valid={parsed['is_valid']}")
             return parsed
 
-        except asyncio.TimeoutError:
+        except TimeoutError:
             self._failure_count += 1
             logger.error(f"Validation timeout | failures={self._failure_count}")
             self._maybe_open_circuit()

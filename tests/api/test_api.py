@@ -3,8 +3,8 @@ from types import SimpleNamespace
 import pytest
 from fastapi.testclient import TestClient
 
-import code.main as main
-from code.metrics import QueryMetrics
+import documind.main as main
+from documind.metrics import QueryMetrics
 
 
 class FakeQdrant:
@@ -133,3 +133,35 @@ def test_openapi_question_example_has_no_top_k(client):
     """Swagger pre-filled top_k=1 for anyone testing via /docs; the example body must omit it."""
     examples = client.get("/openapi.json").json()["components"]["schemas"]["Question"]["examples"]
     assert examples and all("top_k" not in e for e in examples)
+
+
+def test_ask_with_api_key_required_rejects_missing_key(client, monkeypatch):
+    import documind.routes.questions as q_mod
+    monkeypatch.setattr(q_mod.settings, "api_key", "secret-test-token")
+    r = client.post("/ask", json={"question": "What is an SCP?"})
+    assert r.status_code == 401
+    assert "Invalid or missing API key" in r.json()["detail"]
+
+
+def test_ask_with_api_key_required_rejects_wrong_key(client, monkeypatch):
+    import documind.routes.questions as q_mod
+    monkeypatch.setattr(q_mod.settings, "api_key", "secret-test-token")
+    r = client.post(
+        "/ask",
+        json={"question": "What is an SCP?"},
+        headers={"X-API-Key": "wrong-token"},
+    )
+    assert r.status_code == 401
+    assert "Invalid or missing API key" in r.json()["detail"]
+
+
+def test_ask_with_api_key_required_accepts_valid_key(client, monkeypatch):
+    import documind.routes.questions as q_mod
+    monkeypatch.setattr(q_mod.settings, "api_key", "secret-test-token")
+    r = client.post(
+        "/ask",
+        json={"question": "What is an SCP?"},
+        headers={"X-API-Key": "secret-test-token"},
+    )
+    assert r.status_code == 200
+    assert r.json()["confidence"] == 0.81

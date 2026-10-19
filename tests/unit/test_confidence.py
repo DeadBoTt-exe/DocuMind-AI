@@ -1,4 +1,4 @@
-"""Unit tests for code.confidence.ConfidenceScorer.
+"""Unit tests for documind.confidence.ConfidenceScorer.
 
 Tests every branch of the scoring formula including all boundary conditions.
 No mocking needed — pure math.
@@ -6,7 +6,7 @@ No mocking needed — pure math.
 
 import pytest
 
-from code.confidence import ConfidenceScorer
+from documind.confidence import ConfidenceScorer
 
 
 @pytest.fixture

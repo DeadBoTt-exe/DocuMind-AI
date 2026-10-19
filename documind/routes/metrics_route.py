@@ -1,8 +1,8 @@
 """Metrics endpoint — exposes runtime query statistics from RAGEngine."""
 
+
 from fastapi import APIRouter, Request
 from pydantic import BaseModel
-from typing import Any
 
 router = APIRouter(tags=["observability"])
 

@@ -1,12 +1,14 @@
 """RAG-based question answering endpoint."""
 
 import logging
+from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException, Request
+from fastapi.security import APIKeyHeader
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
-from code.config import settings
-from code.rag import RAGEngine
+from documind.config import settings
+from documind.rag import RAGEngine
 
 logger = logging.getLogger(__name__)
 
@@ -90,6 +92,24 @@ class ErrorResponse(BaseModel):
     detail: str
 
 
+api_key_header = APIKeyHeader(name="X-API-Key", auto_error=False)
+
+
+async def verify_api_key(api_key: str | None = Depends(api_key_header)) -> None:
+    """Verify API key if configured in settings.
+    
+    If settings.api_key is unset, authentication is disabled (permissive for local dev).
+    If set, requests missing the header or providing an invalid key are rejected with 401.
+    """
+    if not settings.api_key:
+        return
+    if not api_key or api_key != settings.api_key:
+        raise HTTPException(
+            status_code=401,
+            detail="Invalid or missing API key. Provide via 'X-API-Key' header.",
+        )
+
+
 # ── Dependency ────────────────────────────────────────────────────────────────
 
 async def get_rag_engine(request: Request) -> RAGEngine:
@@ -106,14 +126,16 @@ async def get_rag_engine(request: Request) -> RAGEngine:
 @router.post(
     "/ask",
     response_model=AskResponse,
+    dependencies=[Depends(verify_api_key)],
     responses={
         400: {"model": ErrorResponse, "description": "Invalid question"},
+        401: {"model": ErrorResponse, "description": "Unauthorized - invalid or missing API key"},
         422: {"description": "Request body failed schema validation"},
         503: {"model": ErrorResponse, "description": "RAG engine unavailable"},
     },
     summary="Answer a question from the documentation",
 )
-async def ask(q: Question, rag: RAGEngine = Depends(get_rag_engine)):
+async def ask(q: Question, rag: Annotated[RAGEngine, Depends(get_rag_engine)]):
     logger.info(f"POST /ask | question_length={len(q.question)} | top_k={q.top_k}")
 
     try:
@@ -121,7 +143,7 @@ async def ask(q: Question, rag: RAGEngine = Depends(get_rag_engine)):
     except RuntimeError as e:
         # RAGEngine raises RuntimeError if Qdrant collection is missing
         logger.error(f"RAGEngine error: {e}")
-        raise HTTPException(status_code=503, detail=str(e))
+        raise HTTPException(status_code=503, detail=str(e)) from e
 
     return AskResponse(
         answer=result["answer"],

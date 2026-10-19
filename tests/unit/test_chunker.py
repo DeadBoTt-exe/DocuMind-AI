@@ -1,4 +1,4 @@
-"""Unit tests for code.chunker.
+"""Unit tests for documind.chunker.
 
 Tests generate_chunk_id determinism and chunk_text boundary behaviour.
 No network calls, no Qdrant, no Gemini — pure logic.
@@ -8,8 +8,7 @@ import uuid
 
 import pytest
 
-from code.chunker import NAMESPACE_DOCUMIND, chunk_text, generate_chunk_id
-
+from documind.chunker import NAMESPACE_DOCUMIND, chunk_text, generate_chunk_id
 
 # ── generate_chunk_id ─────────────────────────────────────────────────────────
 
@@ -242,7 +241,7 @@ class TestChunkTextSizeCap:
         assert len(result) == 3 and all(len(c["text"]) <= 500 for c in result)
 
     def test_overlap_never_pushes_chunk_over_limit(self):
-        sents = [("S%d " % i) + "a" * 140 + "." for i in range(12)]
+        sents = [f"S{i} " + "a" * 140 + "." for i in range(12)]
         result = chunk_text(" ".join(sents), source_file="doc.pdf", page=1, service="aws",
                             max_chars=350, overlap_sentences=2)
         assert len(result) > 2

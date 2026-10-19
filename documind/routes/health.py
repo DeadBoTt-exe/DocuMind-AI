@@ -4,7 +4,7 @@ import logging
 
 from fastapi import APIRouter, HTTPException, Request
 
-from code.config import settings
+from documind.config import settings
 
 logger = logging.getLogger(__name__)
 

@@ -2,12 +2,11 @@
 
 import asyncio
 import logging
-from typing import List
 
 import numpy as np
 from sentence_transformers import SentenceTransformer
 
-from code.config import settings
+from documind.config import settings
 
 logger = logging.getLogger(__name__)
 
@@ -20,7 +19,7 @@ class EmbeddingModel:
         self._lock = asyncio.Lock()  # Phase 3 concurrency fix — included now, costs nothing
         logger.info("Embedding model loaded")
 
-    def embed(self, texts: List[str], normalize: bool = True) -> np.ndarray:
+    def embed(self, texts: list[str], normalize: bool = True) -> np.ndarray:
         embeddings = self.model.encode(
             texts,
             batch_size=self.batch_size,
@@ -31,6 +30,6 @@ class EmbeddingModel:
             embeddings = embeddings / np.linalg.norm(embeddings, axis=1, keepdims=True)
         return embeddings
 
-    async def embed_async(self, texts: List[str], normalize: bool = True) -> np.ndarray:
+    async def embed_async(self, texts: list[str], normalize: bool = True) -> np.ndarray:
         async with self._lock:
             return await asyncio.to_thread(self.embed, texts, normalize)

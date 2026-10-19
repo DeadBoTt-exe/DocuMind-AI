@@ -1,4 +1,4 @@
-from code.config import Settings
+from documind.config import Settings
 
 
 def test_host_port_when_no_url():

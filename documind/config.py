@@ -6,7 +6,7 @@ Priority order (highest → lowest):
   3. Defaults defined below         (safe to run without any env vars set)
 
 Usage:
-    from code.config import settings
+    from documind.config import settings
 
     qdrant = QdrantClient(host=settings.qdrant_host, port=settings.qdrant_port)
 """
@@ -87,6 +87,11 @@ class Settings(BaseSettings):
         description="Directory that contains source PDFs",
     )
 
+    # ── Security / Auth ───────────────────────────────────────────────────────
+    # Optional API key for protecting endpoints like /ask on public deployments (Cloud Run).
+    # If None or empty, requests are allowed without authentication.
+    api_key: str | None = Field(default=None, alias="API_KEY")
+
     # ── Logging ───────────────────────────────────────────────────────────────
     log_level: str = Field(default="INFO")
 
@@ -125,5 +130,5 @@ def get_settings() -> Settings:
 
 
 # Module-level alias — callers import this directly:
-#   from code.config import settings
+#   from documind.config import settings
 settings: Settings = get_settings()

@@ -2,8 +2,8 @@ import time
 
 import pytest
 
-from code.metrics import QueryMetrics
-from code.validator import GroundingValidator
+from documind.metrics import QueryMetrics
+from documind.validator import GroundingValidator
 
 
 @pytest.fixture
@@ -39,7 +39,7 @@ async def test_llm_error_fails_closed(v, monkeypatch):
 
 
 async def test_timeout_fails_closed(v, monkeypatch):
-    import code.validator as mod
+    import documind.validator as mod
     monkeypatch.setattr(mod.settings, "validation_timeout_seconds", 0.05)
     monkeypatch.setattr(v, "_call_llm", lambda p: time.sleep(0.3) or "VALID")
     r = await v.validate_async(question="q", answer="a", context="c")

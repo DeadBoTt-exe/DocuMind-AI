@@ -1,12 +1,11 @@
-"""Unit tests for code.cleaner.
+"""Unit tests for documind.cleaner.
 
 Tests every regex pattern in clean_text independently, then combined.
 No imports from config or external services needed.
 """
 
-import pytest
 
-from code.cleaner import clean_text
+from documind.cleaner import clean_text
 
 
 class TestCleanTextHeaderStripping:

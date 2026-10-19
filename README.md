@@ -79,7 +79,7 @@ docker run -d \
 
 Index Documentation:
 ```python
-python -m code.index_documents
+python -m documind.index_documents
 ```
 This step:
 - Parses the PDF
@@ -89,7 +89,7 @@ This step:
 
 Run the API:
 ```bash
-uvicorn code.main:app --host 127.0.0.1 --port 8000
+uvicorn documind.main:app --host 127.0.0.1 --port 8000
 ```
 It will be here - 
 ```bash
@@ -97,14 +97,14 @@ http://127.0.0.1:8000
 ```
 Keep-alive for hosted (free) Qdrant clusters, which are suspended after a week idle:
 `GET /health/qdrant` reads from Qdrant without calling Gemini. Point a scheduler or uptime monitor at it.
-If a cluster is ever deleted, re-run `python -m code.index_documents` to rebuild the index.
+If a cluster is ever deleted, re-run `python -m documind.index_documents` to rebuild the index.
 
 Interactive docs will be here:
 ```bash
 http://127.0.0.1:8000/docs
 ```
 
-Exampele Query - 
+Example Query - 
 ```
 {
   "question": "What is a service control policy in AWS Organizations?"
@@ -125,36 +125,53 @@ Exampele Query -
 
 ## Project Structure
 
-```
+`
 DocuMind
 |
-├── code/
+├── documind/
 │   ├── routes/
-│       ├── __init__.py
-│       ├── health.py
-│       └── questions.py 
+│   │   ├── __init__.py
+│   │   ├── health.py
+│   │   ├── metrics_route.py
+│   │   └── questions.py 
 │   ├── __init__.py
 │   ├── chunker.py
 │   ├── cleaner.py
 │   ├── confidence.py
+│   ├── config.py
 │   ├── embeddings.py
 │   ├── index_documents.py
 │   ├── ingest.py
-│   ├── validator.py
-│   ├── rag.py
-|   ├── logging_config.py
+│   ├── logging_config.py
 │   ├── main.py
-|   └── prompts.py
+│   ├── metrics.py
+│   ├── prompts.py
+│   ├── rag.py
+│   └── validator.py
 │
 ├── docs/
 │   ├── AWS SDKs and Tools - Reference Guide - aws-sdk-ref.pdf
-│   ├── organizations-userguide.pdf
-│  
+│   └── organizations-userguide.pdf
+│
+├── tests/
+│   ├── api/
+│   │   └── test_api.py
+│   └── unit/
+│       ├── test_chunker.py
+│       ├── test_cleaner.py
+│       ├── test_confidence.py
+│       ├── test_config_qdrant.py
+│       ├── test_logging_config.py
+│       ├── test_question_model.py
+│       ├── test_rag_engine.py
+│       └── test_validator.py
+│
+├── .dockerignore
+├── .env.example
 ├── .gitignore
-├── .env
+├── Dockerfile
 ├── LICENSE
+├── pyproject.toml
 ├── requirements.txt
 └── README.md
-
-```
-
+`

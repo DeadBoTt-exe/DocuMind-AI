@@ -3,8 +3,8 @@
 import asyncio
 import logging
 import time
+from collections.abc import Callable
 from functools import wraps
-from typing import Callable
 
 
 def setup_logging(level: int | str = logging.INFO):

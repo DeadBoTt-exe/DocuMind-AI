@@ -4,11 +4,11 @@ from types import SimpleNamespace
 
 import numpy as np
 
-from code.confidence import ConfidenceScorer
-from code.config import settings
-from code.metrics import QueryMetrics
-from code.prompts import DEFAULT_NO_ANSWER, LLM_ERROR_ANSWER, VALIDATION_FAILED_ANSWER
-from code.rag import RAGEngine
+from documind.confidence import ConfidenceScorer
+from documind.config import settings
+from documind.metrics import QueryMetrics
+from documind.prompts import DEFAULT_NO_ANSWER, LLM_ERROR_ANSWER, VALIDATION_FAILED_ANSWER
+from documind.rag import RAGEngine
 
 
 def point(text="SCPs offer central control.", file="doc.pdf", page=3, score=0.8):

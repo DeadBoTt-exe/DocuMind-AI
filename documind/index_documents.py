@@ -3,9 +3,9 @@
 from qdrant_client import QdrantClient
 from qdrant_client.models import Distance, PointStruct, VectorParams
 
-from code.config import settings
-from code.embeddings import EmbeddingModel
-from code.ingest import load_pdf_documents
+from documind.config import settings
+from documind.embeddings import EmbeddingModel
+from documind.ingest import load_pdf_documents
 
 
 def main():
@@ -32,7 +32,7 @@ def main():
         print(f"Created collection '{settings.qdrant_collection}'")
 
     points = []
-    for emb, chunk in zip(embeddings, chunks):
+    for emb, chunk in zip(embeddings, chunks, strict=True):
         points.append(
             PointStruct(
                 id=chunk["id"],

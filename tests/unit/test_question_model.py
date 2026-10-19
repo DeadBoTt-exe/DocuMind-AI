@@ -7,8 +7,7 @@ Fast enough to run on every save.
 import pytest
 from pydantic import ValidationError
 
-from code.routes.questions import MAX_QUESTION_CHARS, MIN_QUESTION_CHARS, Question
-
+from documind.routes.questions import MAX_QUESTION_CHARS, MIN_QUESTION_CHARS, Question
 
 # ── Valid inputs ──────────────────────────────────────────────────────────────
 

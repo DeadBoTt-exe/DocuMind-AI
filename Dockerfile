@@ -1,4 +1,5 @@
-# UNTESTED draft: build locally first with `docker build -t documind .`
+# Production Docker image for DocuMind RAG (Cloud Run ready)
+# Build locally: `docker build -t documind .`
 FROM python:3.12-slim
 
 ENV PYTHONUNBUFFERED=1 PIP_NO_CACHE_DIR=1 HF_HOME=/opt/hf
@@ -13,7 +14,7 @@ RUN python -m spacy download en_core_web_sm
 # Bake the embedding model into the image so cold starts don't download it
 RUN python -c "from sentence_transformers import SentenceTransformer; SentenceTransformer('all-mpnet-base-v2')"
 
-COPY code ./code
+COPY documind ./documind
 
 # Run as a non-root user
 RUN useradd --create-home app && chown -R app /opt/hf
@@ -21,4 +22,4 @@ USER app
 
 # Cloud Run injects $PORT. Secrets (GEMINI_API_KEY, QDRANT_URL, QDRANT_API_KEY) come from
 # the environment / Secret Manager; there is deliberately no .env in the image.
-CMD exec uvicorn code.main:app --host 0.0.0.0 --port ${PORT:-8080}
+CMD exec uvicorn documind.main:app --host 0.0.0.0 --port ${PORT:-8080}

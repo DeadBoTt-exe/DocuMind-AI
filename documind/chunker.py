@@ -1,11 +1,10 @@
 """Sentence-boundary aware chunking with deterministic IDs for stable document identity."""
 
 import uuid
-from typing import Dict, List
 
 import spacy
 
-from code.config import settings
+from documind.config import settings
 
 nlp = spacy.load("en_core_web_sm", disable=["ner", "parser", "tagger", "lemmatizer"])
 nlp.add_pipe("sentencizer")
@@ -18,18 +17,18 @@ def generate_chunk_id(file: str, page: int, offset: int) -> str:
     return str(uuid.uuid5(NAMESPACE_DOCUMIND, content))
 
 
-def _joined_len(parts: List[str]) -> int:
+def _joined_len(parts: list[str]) -> int:
     """Length of " ".join(parts) without building the string."""
     return sum(map(len, parts)) + max(len(parts) - 1, 0)
 
 
-def _split_oversized(sentence: str, max_chars: int) -> List[str]:
+def _split_oversized(sentence: str, max_chars: int) -> list[str]:
     """Split one over-long sentence on whitespace into pieces of at most max_chars."""
     if len(sentence) <= max_chars:
         return [sentence]
 
-    parts: List[str] = []
-    buf: List[str] = []
+    parts: list[str] = []
+    buf: list[str] = []
     n = 0
     for word in sentence.split():
         while len(word) > max_chars:  # pathological unbroken token: hard-slice it
@@ -57,7 +56,7 @@ def chunk_text(
     service: str,
     max_chars: int | None = None,
     overlap_sentences: int | None = None,
-) -> List[Dict]:
+) -> list[dict]:
     max_chars = max_chars if max_chars is not None else settings.chunk_max_chars
     overlap_sentences = overlap_sentences if overlap_sentences is not None else settings.chunk_overlap_sentences
 
@@ -72,7 +71,7 @@ def chunk_text(
     sentences = [part for sent in sentences for part in _split_oversized(sent, max_chars)]
 
     chunks = []
-    current_chunk: List[str] = []
+    current_chunk: list[str] = []
     offset = 0
 
     for sent in sentences:
