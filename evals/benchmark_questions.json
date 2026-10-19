@@ -1,0 +1,182 @@
+[
+  {
+    "id": "q01",
+    "category": "directly_answerable",
+    "question": "What is a service control policy (SCP) in AWS Organizations?",
+    "expected_answer_keywords": ["policy", "permission", "central", "guardrail", "organization"],
+    "expected_source": "organizations-userguide.pdf",
+    "expected_answerable": true,
+    "description": "Fundamental core concept of AWS Organizations"
+  },
+  {
+    "id": "q02",
+    "category": "directly_answerable",
+    "question": "What is the difference between a management account and a member account in AWS Organizations?",
+    "expected_answer_keywords": ["management", "member", "creates", "pay", "administer"],
+    "expected_source": "organizations-userguide.pdf",
+    "expected_answerable": true,
+    "description": "Account hierarchy roles"
+  },
+  {
+    "id": "q03",
+    "category": "directly_answerable",
+    "question": "What is an organizational unit (OU) in AWS Organizations?",
+    "expected_answer_keywords": ["container", "account", "hierarchy", "structure", "attach"],
+    "expected_source": "organizations-userguide.pdf",
+    "expected_answerable": true,
+    "description": "Structural grouping concept"
+  },
+  {
+    "id": "q04",
+    "category": "directly_answerable",
+    "question": "How does policy inheritance work across organizational units in AWS Organizations?",
+    "expected_answer_keywords": ["inherit", "root", "parent", "child", "downstream"],
+    "expected_source": "organizations-userguide.pdf",
+    "expected_answerable": true,
+    "description": "Policy cascade semantics"
+  },
+  {
+    "id": "q05",
+    "category": "directly_answerable",
+    "question": "What is consolidated billing in AWS Organizations?",
+    "expected_answer_keywords": ["billing", "payment", "single", "combine", "invoice"],
+    "expected_source": "organizations-userguide.pdf",
+    "expected_answerable": true,
+    "description": "Financial management feature"
+  },
+  {
+    "id": "q06",
+    "category": "directly_answerable",
+    "question": "Can a service control policy grant permissions to an account?",
+    "expected_answer_keywords": ["cannot", "not grant", "guardrail", "maximum", "limit"],
+    "expected_source": "organizations-userguide.pdf",
+    "expected_answerable": true,
+    "description": "Common security misconception test"
+  },
+  {
+    "id": "q07",
+    "category": "directly_answerable",
+    "question": "What is a backup policy in AWS Organizations?",
+    "expected_answer_keywords": ["backup", "plan", "policy", "schedule", "aws backup"],
+    "expected_source": "organizations-userguide.pdf",
+    "expected_answerable": true,
+    "description": "Management policy types"
+  },
+  {
+    "id": "q08",
+    "category": "directly_answerable",
+    "question": "What is a tag policy in AWS Organizations?",
+    "expected_answer_keywords": ["tag", "standard", "compliance", "keys", "enforce"],
+    "expected_source": "organizations-userguide.pdf",
+    "expected_answerable": true,
+    "description": "Governance policy types"
+  },
+  {
+    "id": "q09",
+    "category": "directly_answerable",
+    "question": "What are the requirements for removing a member account from an organization?",
+    "expected_answer_keywords": ["payment", "information", "support", "agreement", "standalone"],
+    "expected_source": "organizations-userguide.pdf",
+    "expected_answerable": true,
+    "description": "Account lifecycle and departure"
+  },
+  {
+    "id": "q10",
+    "category": "directly_answerable",
+    "question": "What is trusted access in AWS Organizations?",
+    "expected_answer_keywords": ["service", "trusted access", "integrate", "role", "permissions"],
+    "expected_source": "organizations-userguide.pdf",
+    "expected_answerable": true,
+    "description": "Cross-service integration feature"
+  },
+  {
+    "id": "q11",
+    "category": "tricky_partially_answerable",
+    "question": "What is the maximum character size limit for an individual service control policy document?",
+    "expected_answer_keywords": ["5120", "characters", "limit", "bytes", "size"],
+    "expected_source": "organizations-userguide.pdf",
+    "expected_answerable": true,
+    "description": "Fine-grained quota detail"
+  },
+  {
+    "id": "q12",
+    "category": "tricky_partially_answerable",
+    "question": "Does an SCP attached to an OU affect users in the management account if that account is inside the OU?",
+    "expected_answer_keywords": ["management account", "not affect", "exempt", "cannot be", "root"],
+    "expected_source": "organizations-userguide.pdf",
+    "expected_answerable": true,
+    "description": "Management account exemption rule"
+  },
+  {
+    "id": "q13",
+    "category": "tricky_partially_answerable",
+    "question": "What happens if you detach the FullAWSAccess policy from the root without attaching another policy?",
+    "expected_answer_keywords": ["deny", "access", "implicit deny", "block", "no permissions"],
+    "expected_source": "organizations-userguide.pdf",
+    "expected_answerable": true,
+    "description": "Default deny edge case"
+  },
+  {
+    "id": "q14",
+    "category": "tricky_partially_answerable",
+    "question": "How many organizational units can be nested under each other in AWS Organizations?",
+    "expected_answer_keywords": ["5", "levels", "depth", "nested", "nesting"],
+    "expected_source": "organizations-userguide.pdf",
+    "expected_answerable": true,
+    "description": "Hierarchy depth quota"
+  },
+  {
+    "id": "q15",
+    "category": "tricky_partially_answerable",
+    "question": "Can an AWS account belong to multiple organizations or multiple parent OUs simultaneously?",
+    "expected_answer_keywords": ["no", "single", "one organization", "one parent", "cannot"],
+    "expected_source": "organizations-userguide.pdf",
+    "expected_answerable": true,
+    "description": "Single-parent tree structural invariant"
+  },
+  {
+    "id": "q16",
+    "category": "out_of_domain",
+    "question": "How do I configure Azure Active Directory Conditional Access policies for multi-factor authentication?",
+    "expected_answer_keywords": ["I don't know based on the documentation."],
+    "expected_source": null,
+    "expected_answerable": false,
+    "description": "Competitor cloud question — must refuse"
+  },
+  {
+    "id": "q17",
+    "category": "out_of_domain",
+    "question": "What are Kubernetes PodDisruptionBudgets and how do they interact with node draining?",
+    "expected_answer_keywords": ["I don't know based on the documentation."],
+    "expected_source": null,
+    "expected_answerable": false,
+    "description": "General cloud-native topic not in AWS Organizations guide"
+  },
+  {
+    "id": "q18",
+    "category": "out_of_domain",
+    "question": "How do I train a convolutional neural network with PyTorch on CUDA GPUs?",
+    "expected_answer_keywords": ["I don't know based on the documentation."],
+    "expected_source": null,
+    "expected_answerable": false,
+    "description": "Machine learning topic completely outside docs scope"
+  },
+  {
+    "id": "q19",
+    "category": "out_of_domain",
+    "question": "What is the capital city of Australia and what is its population?",
+    "expected_answer_keywords": ["I don't know based on the documentation."],
+    "expected_source": null,
+    "expected_answerable": false,
+    "description": "General trivia — must not hallucinate using general LLM knowledge"
+  },
+  {
+    "id": "q20",
+    "category": "out_of_domain",
+    "question": "How do I write a fast inverse square root function in C using bit manipulation?",
+    "expected_answer_keywords": ["I don't know based on the documentation."],
+    "expected_source": null,
+    "expected_answerable": false,
+    "description": "Low-level graphics programming trivia — must refuse cleanly"
+  }
+]
