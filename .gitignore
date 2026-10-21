@@ -5,6 +5,14 @@ __pycache__/
 *.py[cod]
 *.pyo
 *.pyd
+*.patch
+
+# -----------------------------
+# Testing & Linting
+# -----------------------------
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
 
 # -----------------------------
 # Virtual environments
@@ -27,15 +35,23 @@ env/
 Thumbs.db
 
 # -----------------------------
-# IDE / Editor
+# IDE / Editor / Agent tools
 # -----------------------------
 .vscode/
 .idea/
+.claude/
 *.swp
 *.swo
+
+# -----------------------------
+# Artifacts & Local analysis outputs
+# -----------------------------
+architecture-overview/
+graphify-out/
+docs/*.txt
+*.extracted.txt
 
 # -----------------------------
 # Logs
 # -----------------------------
 *.log
-
