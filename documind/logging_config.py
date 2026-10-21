@@ -8,12 +8,29 @@ from functools import wraps
 
 
 def setup_logging(level: int | str = logging.INFO):
-    """Configure root logger. Accepts a log level int or string (e.g. 'DEBUG')."""
-    logging.basicConfig(
-        level=level,
-        format="%(asctime)s | %(name)s | %(levelname)s | %(message)s",
-        datefmt="%Y-%m-%d %H:%M:%S",
-    )
+    """Configure root and existing logger handlers. Accepts a log level int or string (e.g. 'DEBUG')."""
+    if isinstance(level, str):
+        level = getattr(logging, level.upper(), logging.INFO)
+
+    root = logging.getLogger()
+    root.setLevel(level)
+
+    # If handlers already exist (e.g. configured by uvicorn), update their levels and formatters
+    if root.handlers:
+        formatter = logging.Formatter(
+            fmt="%(asctime)s | %(name)s | %(levelname)s | %(message)s",
+            datefmt="%Y-%m-%d %H:%M:%S",
+        )
+        for handler in root.handlers:
+            handler.setLevel(level)
+            handler.setFormatter(formatter)
+    else:
+        logging.basicConfig(
+            level=level,
+            format="%(asctime)s | %(name)s | %(levelname)s | %(message)s",
+            datefmt="%Y-%m-%d %H:%M:%S",
+        )
+
     # httpx logs every request URL at INFO, which floods logs and exposes the cluster host.
     for noisy in ("httpx", "httpcore"):
         logging.getLogger(noisy).setLevel(logging.WARNING)

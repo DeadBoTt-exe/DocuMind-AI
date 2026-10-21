@@ -4,7 +4,7 @@
 
 class ConfidenceScorer:
     def score(self, *, retrieval_scores: list[float], num_chunks: int, is_valid: bool) -> float:
-        if not is_valid:
+        if not is_valid or not retrieval_scores or num_chunks <= 0:
             return 0.0
 
         avg_score = sum(retrieval_scores) / len(retrieval_scores)

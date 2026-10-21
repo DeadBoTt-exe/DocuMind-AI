@@ -74,6 +74,7 @@ async def test_success_resets_failure_count(v, monkeypatch):
 
 def test_reset_circuit(v):
     v._circuit_open = True
+    v._last_failure_time = time.monotonic()
     v._failure_count = 9
     v.reset_circuit()
     assert v.circuit_open is False and v._failure_count == 0
@@ -89,6 +90,7 @@ def test_sync_llm_error_fails_closed(v, monkeypatch):
 
 def test_sync_circuit_open_fails_closed(v):
     v._circuit_open = True
+    v._last_failure_time = time.monotonic()
     r = v.validate(question="q", answer="a", context="c")
     assert r["is_valid"] is False and r["skipped"] is True and r["circuit_open"] is True
 

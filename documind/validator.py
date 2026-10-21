@@ -1,16 +1,19 @@
-"""Grounding validation with circuit breaker for resilience.
+"""Grounding validation with circuit breaker and self-healing recovery.
 
 Fails CLOSED: if validation cannot run (error, timeout, or circuit open) the answer is
 reported as not validated, with skipped=True so callers can tell "could not check"
 apart from "checked and unsupported".
 
-Uses google.genai directly (same client as RAGEngine).
-Notifies a QueryMetrics instance on circuit state changes so the
-/metrics endpoint reflects real-time validator health.
+Features:
+- Circuit breaker trips after validation_max_failures consecutive errors.
+- Self-healing half-open recovery probe after validation_recovery_timeout_seconds (TTL).
+- Non-blocking timeout handling.
+- Notifies QueryMetrics on circuit state changes.
 """
 
 import asyncio
 import logging
+import time
 from typing import TYPE_CHECKING
 
 import google.genai as genai
@@ -31,6 +34,7 @@ class GroundingValidator:
         self.model = settings.gemini_validation_model
         self._failure_count = 0
         self._circuit_open = False
+        self._last_failure_time: float = 0.0
         self._metrics = metrics      # injected by RAGEngine; None = standalone use
 
     # ── Internal helpers ──────────────────────────────────────────────────────
@@ -59,28 +63,50 @@ class GroundingValidator:
         )
         return response.text.strip()
 
-    def _maybe_open_circuit(self) -> None:
+    def _record_failure(self) -> None:
+        self._failure_count += 1
+        self._last_failure_time = time.monotonic()
         if self._failure_count >= settings.validation_max_failures:
-            self._circuit_open = True
-            if self._metrics:
-                self._metrics.record_circuit_opened()
-            logger.error("Circuit breaker OPEN — validation disabled")
+            if not self._circuit_open:
+                self._circuit_open = True
+                if self._metrics:
+                    self._metrics.record_circuit_opened()
+                logger.error("Circuit breaker OPEN — validation disabled")
+
+    def _record_success(self) -> None:
+        if self._circuit_open:
+            self.reset_circuit()
+        else:
+            self._failure_count = 0
+
+    def _should_allow_request(self) -> bool:
+        """Check if request is allowed, supporting self-healing TTL recovery probe (half-open)."""
+        if not self._circuit_open:
+            return True
+        # Half-open check: if recovery timeout elapsed, allow a single probe request through
+        elapsed = time.monotonic() - self._last_failure_time
+        if elapsed >= settings.validation_recovery_timeout_seconds:
+            logger.info("Circuit breaker HALF-OPEN probe allowed after recovery TTL")
+            return True
+        return False
 
     # ── Public interface ──────────────────────────────────────────────────────
 
     @property
     def circuit_open(self) -> bool:
+        # If open but recovery timeout passed, it's effectively half-open testing
         return self._circuit_open
 
     def reset_circuit(self) -> None:
         self._circuit_open = False
         self._failure_count = 0
+        self._last_failure_time = 0.0
         if self._metrics:
             self._metrics.record_circuit_reset()
         logger.info("Validation circuit breaker reset")
 
     async def validate_async(self, *, question: str, answer: str, context: str) -> dict:
-        if self._circuit_open:
+        if not self._should_allow_request():
             logger.warning("Validation circuit open, skipping validation")
             return {
                 "is_valid": False,
@@ -96,15 +122,14 @@ class GroundingValidator:
                 asyncio.to_thread(self._call_llm, prompt),
                 timeout=settings.validation_timeout_seconds,
             )
-            self._failure_count = 0
+            self._record_success()
             parsed = self._parse_result(result)
             logger.info(f"Validation complete | is_valid={parsed['is_valid']}")
             return parsed
 
         except TimeoutError:
-            self._failure_count += 1
+            self._record_failure()
             logger.error(f"Validation timeout | failures={self._failure_count}")
-            self._maybe_open_circuit()
             return {
                 "is_valid": False,
                 "reason": "Validation timed out",
@@ -113,9 +138,8 @@ class GroundingValidator:
             }
 
         except Exception as e:
-            self._failure_count += 1
+            self._record_failure()
             logger.error(f"Validation error: {e} | failures={self._failure_count}")
-            self._maybe_open_circuit()
             return {
                 "is_valid": False,
                 "reason": "Validation could not run (error)",
@@ -124,7 +148,8 @@ class GroundingValidator:
             }
 
     def validate(self, *, question: str, answer: str, context: str) -> dict:
-        if self._circuit_open:
+        """Synchronous validation path with timeout and recovery support."""
+        if not self._should_allow_request():
             return {
                 "is_valid": False,
                 "reason": "Validation skipped (circuit open)",
@@ -135,16 +160,29 @@ class GroundingValidator:
         prompt = self._build_prompt(question=question, answer=answer, context=context)
 
         try:
-            result = self._call_llm(prompt)
-            self._failure_count = 0
+            # Enforce validation timeout in sync mode using a worker thread
+            import concurrent.futures
+            with concurrent.futures.ThreadPoolExecutor(max_workers=1) as executor:
+                future = executor.submit(self._call_llm, prompt)
+                result = future.result(timeout=settings.validation_timeout_seconds)
+
+            self._record_success()
             parsed = self._parse_result(result)
             logger.info(f"Validation complete | is_valid={parsed['is_valid']}")
             return parsed
 
+        except TimeoutError:
+            self._record_failure()
+            logger.error(f"Sync validation timeout | failures={self._failure_count}")
+            return {
+                "is_valid": False,
+                "reason": "Validation timed out",
+                "timeout": True,
+                "skipped": True,
+            }
         except Exception as e:
-            self._failure_count += 1
+            self._record_failure()
             logger.error(f"Validation error: {e}")
-            self._maybe_open_circuit()
             return {
                 "is_valid": False,
                 "reason": "Validation could not run (error)",

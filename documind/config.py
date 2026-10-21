@@ -14,7 +14,7 @@ Usage:
 from functools import lru_cache
 from pathlib import Path
 
-from pydantic import Field, field_validator
+from pydantic import Field, field_validator, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -33,10 +33,10 @@ class Settings(BaseSettings):
         default="models/gemini-2.5-flash",
         description="Full model string passed to google.genai Client",
     )
-    # Validation model — used by GroundingValidator (via langchain)
+    # Validation model — used by GroundingValidator
     gemini_validation_model: str = Field(
         default="gemini-2.5-flash",
-        description="Model name passed to ChatGoogleGenerativeAI (no 'models/' prefix)",
+        description="Model name passed to google.genai Client",
     )
 
     # ── Qdrant ────────────────────────────────────────────────────────────────
@@ -70,7 +70,7 @@ class Settings(BaseSettings):
         description="Number of chunks to retrieve per query",
     )
 
-    # ── Indexing ──────────────────────────────────────────────────────────────
+    # ── Indexing ───────────────────────────────────────────────────────
     index_upsert_batch_size: int = Field(default=64, ge=1)
 
     # ── Validator / circuit breaker ───────────────────────────────────────────
@@ -79,6 +79,11 @@ class Settings(BaseSettings):
         default=3,
         ge=1,
         description="Consecutive failures before the circuit breaker opens",
+    )
+    validation_recovery_timeout_seconds: float = Field(
+        default=60.0,
+        gt=0,
+        description="Seconds after tripping before circuit breaker allows a half-open probe",
     )
 
     # ── Ingestion sources ─────────────────────────────────────────────────────
@@ -89,7 +94,7 @@ class Settings(BaseSettings):
 
     # ── Security / Auth ───────────────────────────────────────────────────────
     # Optional API key for protecting endpoints like /ask on public deployments (Cloud Run).
-    # If None or empty, requests are allowed without authentication.
+    # If None or empty string, authentication is disabled (with a log warning if empty string).
     api_key: str | None = Field(default=None, alias="API_KEY")
 
     # ── Logging ───────────────────────────────────────────────────────────────
@@ -117,6 +122,16 @@ class Settings(BaseSettings):
         if not v.strip():
             raise ValueError("GEMINI_API_KEY is set but empty")
         return v
+
+    @model_validator(mode="after")
+    def validate_chunk_bounds(self) -> "Settings":
+        """Cross-field validation: chunk_min_chars must be strictly less than chunk_max_chars."""
+        if self.chunk_min_chars >= self.chunk_max_chars:
+            raise ValueError(
+                f"chunk_min_chars ({self.chunk_min_chars}) must be less than "
+                f"chunk_max_chars ({self.chunk_max_chars})"
+            )
+        return self
 
 
 @lru_cache(maxsize=1)

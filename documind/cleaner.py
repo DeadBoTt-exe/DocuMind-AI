@@ -20,11 +20,20 @@ AWS_HEADER_PATTERNS = [
 
 
 def clean_text(text: str) -> str:
+    """Clean text by stripping headers, footers, and page numbers safely.
+    
+    Page numbers are only stripped at boundaries (leading or trailing page numbers),
+    never in the middle of sentences or lists (e.g. numbered steps '1', '2' or table values).
+    """
     for pattern in AWS_HEADER_PATTERNS:
         text = re.sub(pattern, "", text, flags=re.IGNORECASE)
 
-    text = re.sub(r"\n\d+\n", "\n", text)   # page numbers first...
-    text = re.sub(r"\n{3,}", "\n\n", text)   # ...then collapse the blank lines they leave
+    # Strip standalone page numbers only at the start or end of the page/text
+    text = re.sub(r"^\s*\d+\s*\n", "", text)
+    text = re.sub(r"\n\s*\d+\s*$", "", text)
+
+    # Collapse excessive blank lines
+    text = re.sub(r"\n{3,}", "\n\n", text)
     text = re.sub(r"[ \t]+", " ", text)
 
     return text.strip()

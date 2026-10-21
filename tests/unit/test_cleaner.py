@@ -69,23 +69,32 @@ class TestCleanTextNewlines:
 
 
 class TestCleanTextPageNumbers:
-    def test_lone_page_number_removed(self):
-        text = "Some text.\n42\nMore text."
-        result = clean_text(text)
-        assert "\n42\n" not in result
-
     def test_page_number_at_start_removed(self):
         text = "\n5\nContent here."
         result = clean_text(text)
-        assert "\n5\n" not in result
+        assert not result.startswith("5")
+        assert "Content here." in result
 
-    def test_multidigit_page_number_removed(self):
-        text = "Section header.\n123\nNext paragraph."
+    def test_page_number_at_end_removed(self):
+        text = "Content here.\n42\n"
         result = clean_text(text)
-        assert "\n123\n" not in result
+        assert not result.endswith("42")
+        assert "Content here." in result
+
+    def test_numbered_list_retained_not_stripped(self):
+        # Steps:\n1\nCreate OU\n2\nAttach SCP must preserve 1 and 2
+        text = "Steps:\n1\nCreate OU\n2\nAttach SCP"
+        result = clean_text(text)
+        assert "1\nCreate OU" in result
+        assert "2\nAttach SCP" in result
+
+    def test_numeric_table_cells_retained(self):
+        text = "Account Count\n100\n120\nTotal"
+        result = clean_text(text)
+        assert "100" in result
+        assert "120" in result
 
     def test_number_in_sentence_not_removed(self):
-        # "There are 42 accounts" — the 42 is NOT surrounded by newlines
         text = "There are 42 accounts in the organization."
         result = clean_text(text)
         assert "42" in result
@@ -119,12 +128,10 @@ class TestCleanTextCombined:
         """Simulates what PyMuPDF extracts from a typical AWS doc page."""
         raw = (
             "AWS Organizations User Guide\n"
-            "\n"
-            "\n"
+            "47\n"
             "Managing  accounts  in  your  organization\n"
             "\n"
-            "47\n"
-            "\n"
+            "Steps:\n1\nCreate OU\n"
             "You can invite existing AWS accounts to join your organization.\n"
             "© Amazon Web Services\n"
         )
@@ -133,9 +140,9 @@ class TestCleanTextCombined:
         assert "AWS Organizations User Guide" not in result
         assert "Amazon Web Services" not in result
         assert "\n\n\n" not in result
-        assert "\n47\n" not in result
         assert "  " not in result
         assert "Managing accounts in your organization" in result
+        assert "1\nCreate OU" in result
         assert "You can invite existing AWS accounts" in result
 
     def test_clean_text_is_idempotent(self):
@@ -145,8 +152,9 @@ class TestCleanTextCombined:
         twice = clean_text(once)
         assert once == twice
 
+
 class TestCleanTextRealPdfFormats:
-    """Formats observed in the real AWS PDF; the single-line header tests above never covered these."""
+    """Formats observed in the real AWS PDF."""
 
     def test_strips_header_split_across_lines(self):
         result = clean_text("AWS Organizations\nUser Guide\n * Example 4: policies\nBody text.")
@@ -165,9 +173,11 @@ class TestCleanTextRealPdfFormats:
         assert "Tools for Amazon Web Services" in clean_text(text)
 
     def test_strips_repeated_tag_policy_table_header(self):
-        header = ("Basic Compliance \n Rules\n Required Tag Keys\n Service\nTag \n Policies \n JSON \n syntax\n "
-                  "CloudForm \n ation \n Alias\n Reporting \n Mode\n Enforceme \n nt Mode\n Reporting \n Mode\n "
-                  "Enforce \n for IaC\n")
+        header = (
+            "Basic Compliance \n Rules\n Required Tag Keys\n Service\nTag \n Policies \n JSON \n syntax\n "
+            "CloudForm \n ation \n Alias\n Reporting \n Mode\n Enforceme \n nt Mode\n Reporting \n Mode\n "
+            "Enforce \n for IaC\n"
+        )
         result = clean_text(header + "iot:thing group Yes No")
         assert "Required Tag Keys" not in result and "CloudForm" not in result
         assert "iot:thing group" in result

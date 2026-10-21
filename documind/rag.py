@@ -58,8 +58,8 @@ class RAGEngine:
         started = time.perf_counter()
         logger.info(f"Query received | question_length={len(question)}")
 
-        # ── Embed ──────────────────────────────────────────────────────────
-        query_embedding = await asyncio.to_thread(self.embedder.embed, [question])
+        # ── Embed (Thread-safe concurrency via embed_async lock) ────────────
+        query_embedding = await self.embedder.embed_async([question])
 
         # ── Retrieve ───────────────────────────────────────────────────────
         search_result = await self.qdrant.query_points(
@@ -248,12 +248,16 @@ class RAGEngine:
                 "confidence": 0.0,
             }
 
+        avg_score = sum(retrieval_scores) / len(retrieval_scores)
+        logger.info(f"Retrieval complete | chunks={len(context_chunks)} | avg_score={avg_score:.3f}")
+
         context = "\n\n".join(context_chunks)
         prompt = RAG_ANSWER_PROMPT.format(context=context, question=question)
 
         try:
             response = self.client.models.generate_content(model=self.model, contents=prompt)
             answer = response.text.strip()
+            logger.info(f"LLM response received | answer_length={len(answer)}")
         except Exception as e:
             logger.error(f"LLM generation failed: {e}")
             self.metrics.record_query(
@@ -286,6 +290,11 @@ class RAGEngine:
             latency_ms=latency_ms,
             validation_passed=validation["is_valid"],
             validation_skipped=validation.get("skipped", False),
+        )
+
+        logger.info(
+            f"Query complete | is_valid={validation['is_valid']} "
+            f"| confidence={confidence} | latency_ms={latency_ms:.1f}"
         )
 
         if not validation["is_valid"]:

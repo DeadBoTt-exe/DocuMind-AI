@@ -19,6 +19,9 @@ class FakeEmbedder:
     def embed(self, texts):
         return np.ones((len(texts), 4))
 
+    async def embed_async(self, texts, normalize=True):
+        return self.embed(texts)
+
 
 class FakeQdrant:
     def __init__(self, points):

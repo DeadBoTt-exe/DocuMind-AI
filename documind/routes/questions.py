@@ -1,6 +1,7 @@
 """RAG-based question answering endpoint."""
 
 import logging
+import secrets
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException, Request
@@ -16,12 +17,9 @@ router = APIRouter(tags=["questions"])
 
 # ── Hard limits ───────────────────────────────────────────────────────────────
 # MAX_QUESTION_CHARS: anything longer is almost certainly a prompt-injection
-# attempt or a copy-paste accident. Gemini Flash context is large, but we
-# don't want to pay for and wait on a 50k-token generation.
-#
+# attempt or a copy-paste accident.
 # MIN_QUESTION_CHARS: single chars and two-char strings produce near-random
-# embeddings and waste a Qdrant round-trip. Enforce a floor that guarantees
-# at least a minimal semantic signal.
+# embeddings. Enforce a floor that guarantees minimal semantic signal.
 MAX_QUESTION_CHARS = 1000
 MIN_QUESTION_CHARS = 3
 
@@ -29,21 +27,18 @@ MIN_QUESTION_CHARS = 3
 # ── Request model ─────────────────────────────────────────────────────────────
 
 class Question(BaseModel):
-    # Without this, Swagger "Try it out" pre-fills top_k with a value (1), which silently
-    # caps answers at one chunk and confidence at ~0.76 for anyone testing via /docs.
     model_config = ConfigDict(json_schema_extra={
         "examples": [{"question": "What is a service control policy in AWS Organizations?"}]
     })
 
+    # No pre-strip string length constraints in Field; validation is cleanly handled
+    # in field_validator below so whitespace padding doesn't skew min/max checks.
     question: str = Field(
         ...,
-        min_length=MIN_QUESTION_CHARS,
-        max_length=MAX_QUESTION_CHARS,
         description="The question to answer from the documentation.",
         examples=["What is the master account in AWS Organizations?"],
     )
-    # Optional per-request override — stays within config bounds so a caller
-    # cannot force an unbounded retrieval.
+    # Optional per-request override within config bounds
     top_k: int | None = Field(
         default=None,
         ge=1,
@@ -57,18 +52,18 @@ class Question(BaseModel):
 
     @field_validator("question")
     @classmethod
-    def strip_and_reject_blank(cls, v: str) -> str:
-        """Strip surrounding whitespace, then reject if the result is empty.
-
-        Pydantic's min_length check runs on the raw value, so '   ' (3 spaces)
-        passes min_length=3 but is semantically empty. This validator catches it.
-        """
+    def strip_and_validate_length(cls, v: str) -> str:
+        """Strip surrounding whitespace first, then validate length boundaries."""
         stripped = v.strip()
         if not stripped:
             raise ValueError("question must not be blank or whitespace-only")
         if len(stripped) < MIN_QUESTION_CHARS:
             raise ValueError(
                 f"question must be at least {MIN_QUESTION_CHARS} characters after trimming"
+            )
+        if len(stripped) > MAX_QUESTION_CHARS:
+            raise ValueError(
+                f"question must be at most {MAX_QUESTION_CHARS} characters after trimming"
             )
         return stripped
 
@@ -96,14 +91,19 @@ api_key_header = APIKeyHeader(name="X-API-Key", auto_error=False)
 
 
 async def verify_api_key(api_key: str | None = Depends(api_key_header)) -> None:
-    """Verify API key if configured in settings.
+    """Constant-time API key verification if configured in settings.
     
-    If settings.api_key is unset, authentication is disabled (permissive for local dev).
-    If set, requests missing the header or providing an invalid key are rejected with 401.
+    If settings.api_key is unset, authentication is disabled.
+    If set to an empty string, logs a warning and leaves auth disabled.
+    If configured, requires X-API-Key header and matches via secrets.compare_digest.
     """
-    if not settings.api_key:
+    configured_key = settings.api_key
+    if not configured_key or not configured_key.strip():
+        if configured_key is not None and not configured_key.strip():
+            logger.warning("API_KEY is configured with an empty string; authentication is disabled.")
         return
-    if not api_key or api_key != settings.api_key:
+
+    if not api_key or not secrets.compare_digest(api_key, configured_key):
         raise HTTPException(
             status_code=401,
             detail="Invalid or missing API key. Provide via 'X-API-Key' header.",
@@ -113,11 +113,7 @@ async def verify_api_key(api_key: str | None = Depends(api_key_header)) -> None:
 # ── Dependency ────────────────────────────────────────────────────────────────
 
 async def get_rag_engine(request: Request) -> RAGEngine:
-    """Retrieve the RAGEngine from app state.
-
-    Using request.app.state directly instead of importing app from main.py
-    avoids a circular import: main → routes → main.
-    """
+    """Retrieve the RAGEngine from app state."""
     return request.app.state.rag
 
 
@@ -128,10 +124,9 @@ async def get_rag_engine(request: Request) -> RAGEngine:
     response_model=AskResponse,
     dependencies=[Depends(verify_api_key)],
     responses={
-        400: {"model": ErrorResponse, "description": "Invalid question"},
         401: {"model": ErrorResponse, "description": "Unauthorized - invalid or missing API key"},
         422: {"description": "Request body failed schema validation"},
-        503: {"model": ErrorResponse, "description": "RAG engine unavailable"},
+        503: {"model": ErrorResponse, "description": "Backend service unavailable (RAG engine / Qdrant)"},
     },
     summary="Answer a question from the documentation",
 )
@@ -140,10 +135,10 @@ async def ask(q: Question, rag: Annotated[RAGEngine, Depends(get_rag_engine)]):
 
     try:
         result = await rag.ask_async(q.question, top_k=q.top_k)
-    except RuntimeError as e:
-        # RAGEngine raises RuntimeError if Qdrant collection is missing
-        logger.error(f"RAGEngine error: {e}")
-        raise HTTPException(status_code=503, detail=str(e)) from e
+    except Exception as e:
+        # Map backend failures (Qdrant connection, timeouts, unhandled RAG runtime errors) to 503
+        logger.error(f"Backend failure during ask_async: {e}")
+        raise HTTPException(status_code=503, detail="RAG backend service unavailable") from e
 
     return AskResponse(
         answer=result["answer"],
