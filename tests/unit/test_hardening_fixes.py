@@ -1,9 +1,11 @@
 """Tests for latent issues, circuit self-healing, and edge cases."""
 
 import time
+
 import pytest
-from documind.config import Settings
+
 from documind.confidence import ConfidenceScorer
+from documind.config import Settings
 from documind.metrics import QueryMetrics
 from documind.validator import GroundingValidator
 

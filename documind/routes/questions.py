@@ -103,7 +103,7 @@ async def verify_api_key(api_key: str | None = Depends(api_key_header)) -> None:
             logger.warning("API_KEY is configured with an empty string; authentication is disabled.")
         return
 
-    if not api_key or not secrets.compare_digest(api_key, configured_key):
+    if not api_key or not secrets.compare_digest(api_key.encode("utf-8"), configured_key.encode("utf-8")):
         raise HTTPException(
             status_code=401,
             detail="Invalid or missing API key. Provide via 'X-API-Key' header.",

@@ -108,3 +108,21 @@ def test_sync_error_reason_does_not_leak_exception_text(v, monkeypatch):
         raise RuntimeError("secret-token-123")
     monkeypatch.setattr(v, "_call_llm", boom)
     assert "secret-token-123" not in str(v.validate(question="q", answer="a", context="c"))
+
+def test_empty_llm_response_skips_without_circuit_failure(v, monkeypatch):
+    monkeypatch.setattr(v, "_call_llm", lambda p: "")
+    r = v.validate(question="q", answer="a", context="c")
+    assert r["is_valid"] is False
+    assert r["skipped"] is True
+    assert v.circuit_open is False
+    assert v._failure_count == 0
+
+
+@pytest.mark.asyncio
+async def test_async_empty_llm_response_skips_without_circuit_failure(v, monkeypatch):
+    monkeypatch.setattr(v, "_call_llm", lambda p: "")
+    r = await v.validate_async(question="q", answer="a", context="c")
+    assert r["is_valid"] is False
+    assert r["skipped"] is True
+    assert v.circuit_open is False
+    assert v._failure_count == 0

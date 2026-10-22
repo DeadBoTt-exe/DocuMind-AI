@@ -75,3 +75,19 @@ def test_evaluator_passes_clean_refusal_on_out_of_domain(benchmark_path):
     result = evaluator.evaluate_response(ood_item, clean_refusal_response, latency_ms=10.0)
     assert result.passed is True
     assert result.confidence == 0.0
+
+
+def test_evaluator_fails_refusal_on_answerable_question(benchmark_path):
+    evaluator = BenchmarkEvaluator(benchmark_path)
+    item = next(q for q in evaluator.dataset if q["category"] == "directly_answerable")
+
+    refusal_response = {
+        "answer": DEFAULT_NO_ANSWER,
+        "sources": [item.get("expected_source", "organizations-userguide.pdf#page-1")],
+        "validation": {"is_valid": False, "reason": "Model declined"},
+        "confidence": 0.0,
+    }
+
+    result = evaluator.evaluate_response(item, refusal_response, latency_ms=10.0)
+    assert result.passed is False
+    assert "Refusal or validation failure on answerable question" in result.notes

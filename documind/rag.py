@@ -128,7 +128,7 @@ class RAGEngine:
                 model=self.model,
                 contents=prompt,
             )
-            answer = response.text.strip()
+            answer = (response.text or "").strip()
             logger.info(f"LLM response received | answer_length={len(answer)}")
         except Exception as e:
             logger.error(f"LLM generation failed: {e}")
@@ -141,6 +141,26 @@ class RAGEngine:
                 "answer": LLM_ERROR_ANSWER,
                 "sources": sorted(sources),
                 "validation": {"is_valid": False, "reason": "Answer generation failed"},
+                "confidence": 0.0,
+            }
+
+        # ── Refusal check ──────────────────────────────────────────────────
+        if answer == DEFAULT_NO_ANSWER or DEFAULT_NO_ANSWER in answer:
+            latency_ms = (time.perf_counter() - started) * 1000
+            self.metrics.record_query(
+                success=True,
+                latency_ms=latency_ms,
+                validation_passed=False,
+                validation_skipped=True,
+            )
+            return {
+                "answer": DEFAULT_NO_ANSWER,
+                "sources": sorted(sources),
+                "validation": {
+                    "is_valid": False,
+                    "reason": "Model declined to answer (insufficient context)",
+                    "skipped": True,
+                },
                 "confidence": 0.0,
             }
 
@@ -256,7 +276,7 @@ class RAGEngine:
 
         try:
             response = self.client.models.generate_content(model=self.model, contents=prompt)
-            answer = response.text.strip()
+            answer = (response.text or "").strip()
             logger.info(f"LLM response received | answer_length={len(answer)}")
         except Exception as e:
             logger.error(f"LLM generation failed: {e}")
@@ -269,6 +289,26 @@ class RAGEngine:
                 "answer": LLM_ERROR_ANSWER,
                 "sources": sorted(sources),
                 "validation": {"is_valid": False, "reason": "Answer generation failed"},
+                "confidence": 0.0,
+            }
+
+        # ── Refusal check ──────────────────────────────────────────────────
+        if answer == DEFAULT_NO_ANSWER or DEFAULT_NO_ANSWER in answer:
+            latency_ms = (time.perf_counter() - started) * 1000
+            self.metrics.record_query(
+                success=True,
+                latency_ms=latency_ms,
+                validation_passed=False,
+                validation_skipped=True,
+            )
+            return {
+                "answer": DEFAULT_NO_ANSWER,
+                "sources": sorted(sources),
+                "validation": {
+                    "is_valid": False,
+                    "reason": "Model declined to answer (insufficient context)",
+                    "skipped": True,
+                },
                 "confidence": 0.0,
             }
 

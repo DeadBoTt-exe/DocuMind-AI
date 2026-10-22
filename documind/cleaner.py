@@ -1,6 +1,7 @@
 """Text cleaning: removes boilerplate and formatting artifacts from raw document text."""
 
 import re
+import unicodedata
 
 # \s+ (not a literal space): in the real PDF the running header is split across
 # lines ("AWS Organizations\nUser Guide"), which a single-space pattern never matches.
@@ -25,6 +26,8 @@ def clean_text(text: str) -> str:
     Page numbers are only stripped at boundaries (leading or trailing page numbers),
     never in the middle of sentences or lists (e.g. numbered steps '1', '2' or table values).
     """
+    text = unicodedata.normalize("NFKC", text)
+
     for pattern in AWS_HEADER_PATTERNS:
         text = re.sub(pattern, "", text, flags=re.IGNORECASE)
 

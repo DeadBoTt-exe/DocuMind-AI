@@ -165,3 +165,15 @@ def test_ask_with_api_key_required_accepts_valid_key(client, monkeypatch):
     )
     assert r.status_code == 200
     assert r.json()["confidence"] == 0.81
+
+
+
+@pytest.mark.asyncio
+async def test_ask_with_api_key_non_ascii_returns_401_not_500(monkeypatch):
+    from fastapi import HTTPException
+
+    import documind.routes.questions as q_mod
+    monkeypatch.setattr(q_mod.settings, "api_key", "secret-test-token")
+    with pytest.raises(HTTPException) as exc_info:
+        await q_mod.verify_api_key("non-ascii-🔑-token")
+    assert exc_info.value.status_code == 401

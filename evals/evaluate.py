@@ -76,6 +76,10 @@ class BenchmarkEvaluator:
                 notes.append(f"Confidence score {confidence} too high for unanswerable question.")
         else:
             # Directly answerable or tricky questions
+            if DEFAULT_NO_ANSWER in answer or answer == VALIDATION_FAILED_ANSWER or not is_valid:
+                passed = False
+                notes.append("Refusal or validation failure on answerable question.")
+
             if item.get("expected_source"):
                 matched_source = any(item["expected_source"] in src for src in sources)
                 if not matched_source:

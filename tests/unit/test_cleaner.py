@@ -181,3 +181,15 @@ class TestCleanTextRealPdfFormats:
         result = clean_text(header + "iot:thing group Yes No")
         assert "Required Tag Keys" not in result and "CloudForm" not in result
         assert "iot:thing group" in result
+
+
+class TestCleanTextLigatures:
+    """Ensure NFKC normalization decomposes ligatures emitted by PyMuPDF."""
+
+    def test_normalizes_fi_fl_ligatures(self):
+        # 'ﬁ' is \ufb01 and 'ﬂ' is \ufb02
+        raw = "Beneﬁts and conﬁguration of workﬂow."
+        result = clean_text(raw)
+        assert result == "Benefits and configuration of workflow."
+        assert "ﬁ" not in result
+        assert "ﬂ" not in result

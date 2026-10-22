@@ -138,3 +138,20 @@ async def test_unexpected_validator_exception_fails_closed_without_leaking():
     assert r["answer"] == VALIDATION_FAILED_ANSWER
     assert r["validation"]["is_valid"] is False
     assert "secret-token-123" not in str(r)
+
+
+
+async def test_refusal_skips_validation_and_returns_zero_confidence():
+    class ExplodingValidator:
+        async def validate_async(self, **kwargs):
+            raise AssertionError("Validator should not be called on refusals")
+
+    e = make_engine([point()], gen_text=DEFAULT_NO_ANSWER)
+    e.validator = ExplodingValidator()
+
+    r = await e.ask_async("What is the speed of light?")
+    assert r["answer"] == DEFAULT_NO_ANSWER
+    assert r["confidence"] == 0.0
+    assert r["validation"]["skipped"] is True
+    assert r["validation"]["is_valid"] is False
+    assert e.metrics.validation_skipped == 1

@@ -31,11 +31,13 @@ class Settings(BaseSettings):
     # Generation model — used by RAGEngine
     gemini_generation_model: str = Field(
         default="models/gemini-2.5-flash",
+        alias="GEMINI_GENERATION_MODEL",
         description="Full model string passed to google.genai Client",
     )
     # Validation model — used by GroundingValidator
     gemini_validation_model: str = Field(
         default="gemini-2.5-flash",
+        alias="GEMINI_VALIDATION_MODEL",
         description="Model name passed to google.genai Client",
     )
 
@@ -141,7 +143,7 @@ def get_settings() -> Settings:
     Cached so the .env file is only read once per process.
     In tests, call get_settings.cache_clear() before monkeypatching env vars.
     """
-    return Settings()
+    return Settings()  # type: ignore[call-arg]
 
 
 # Module-level alias — callers import this directly:

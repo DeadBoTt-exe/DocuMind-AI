@@ -213,6 +213,7 @@ DocuMind
 │   │   ├── test_confidence.py
 │   │   ├── test_config_qdrant.py
 │   │   ├── test_evals.py
+│   │   ├── test_hardening_fixes.py
 │   │   ├── test_logging_config.py
 │   │   ├── test_question_model.py
 │   │   ├── test_rag_engine.py

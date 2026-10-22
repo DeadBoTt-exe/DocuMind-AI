@@ -58,9 +58,11 @@ class GroundingValidator:
             contents=prompt,
             config=genai_types.GenerateContentConfig(
                 temperature=0.0,
-                max_output_tokens=256,
+                max_output_tokens=1024,
             ),
         )
+        if not response.text:
+            return ""
         return response.text.strip()
 
     def _record_failure(self) -> None:
@@ -122,6 +124,13 @@ class GroundingValidator:
                 asyncio.to_thread(self._call_llm, prompt),
                 timeout=settings.validation_timeout_seconds,
             )
+            if not result:
+                logger.warning("Validation LLM returned empty response; skipping without circuit failure")
+                return {
+                    "is_valid": False,
+                    "reason": "Validation skipped (empty LLM response)",
+                    "skipped": True,
+                }
             self._record_success()
             parsed = self._parse_result(result)
             logger.info(f"Validation complete | is_valid={parsed['is_valid']}")
@@ -162,9 +171,20 @@ class GroundingValidator:
         try:
             # Enforce validation timeout in sync mode using a worker thread
             import concurrent.futures
-            with concurrent.futures.ThreadPoolExecutor(max_workers=1) as executor:
+            executor = concurrent.futures.ThreadPoolExecutor(max_workers=1)
+            try:
                 future = executor.submit(self._call_llm, prompt)
                 result = future.result(timeout=settings.validation_timeout_seconds)
+            finally:
+                executor.shutdown(wait=False, cancel_futures=True)
+
+            if not result:
+                logger.warning("Validation LLM returned empty response; skipping without circuit failure")
+                return {
+                    "is_valid": False,
+                    "reason": "Validation skipped (empty LLM response)",
+                    "skipped": True,
+                }
 
             self._record_success()
             parsed = self._parse_result(result)
