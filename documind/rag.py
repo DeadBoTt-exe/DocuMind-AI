@@ -123,12 +123,17 @@ class RAGEngine:
         prompt = RAG_ANSWER_PROMPT.format(context=context, question=question)
 
         try:
-            response = await asyncio.to_thread(
-                self.client.models.generate_content,
-                model=self.model,
-                contents=prompt,
+            response = await asyncio.wait_for(
+                asyncio.to_thread(
+                    self.client.models.generate_content,
+                    model=self.model,
+                    contents=prompt,
+                ),
+                timeout=settings.generation_timeout_seconds,
             )
             answer = (response.text or "").strip()
+            if not answer:
+                raise ValueError("empty generation")
             logger.info(f"LLM response received | answer_length={len(answer)}")
         except Exception as e:
             logger.error(f"LLM generation failed: {e}")
@@ -145,17 +150,17 @@ class RAGEngine:
             }
 
         # ── Refusal check ──────────────────────────────────────────────────
-        if answer == DEFAULT_NO_ANSWER or DEFAULT_NO_ANSWER in answer:
+        normalized = answer.strip().strip('"\'').strip()
+        if normalized == DEFAULT_NO_ANSWER:
             latency_ms = (time.perf_counter() - started) * 1000
             self.metrics.record_query(
                 success=True,
                 latency_ms=latency_ms,
-                validation_passed=False,
-                validation_skipped=True,
+                refusal=True,
             )
             return {
                 "answer": DEFAULT_NO_ANSWER,
-                "sources": sorted(sources),
+                "sources": [],
                 "validation": {
                     "is_valid": False,
                     "reason": "Model declined to answer (insufficient context)",
@@ -163,6 +168,29 @@ class RAGEngine:
                 },
                 "confidence": 0.0,
             }
+
+        # If refusal is appended as a disclaimer to a partial answer, strip it and validate substantive part
+        if DEFAULT_NO_ANSWER in answer:
+            trimmed = answer.replace(DEFAULT_NO_ANSWER, "").strip()
+            if trimmed:
+                answer = trimmed
+            else:
+                latency_ms = (time.perf_counter() - started) * 1000
+                self.metrics.record_query(
+                    success=True,
+                    latency_ms=latency_ms,
+                    refusal=True,
+                )
+                return {
+                    "answer": DEFAULT_NO_ANSWER,
+                    "sources": [],
+                    "validation": {
+                        "is_valid": False,
+                        "reason": "Model declined to answer (insufficient context)",
+                        "skipped": True,
+                    },
+                    "confidence": 0.0,
+                }
 
         # ── Validate ───────────────────────────────────────────────────────
         try:
@@ -277,6 +305,8 @@ class RAGEngine:
         try:
             response = self.client.models.generate_content(model=self.model, contents=prompt)
             answer = (response.text or "").strip()
+            if not answer:
+                raise ValueError("empty generation")
             logger.info(f"LLM response received | answer_length={len(answer)}")
         except Exception as e:
             logger.error(f"LLM generation failed: {e}")
@@ -293,17 +323,17 @@ class RAGEngine:
             }
 
         # ── Refusal check ──────────────────────────────────────────────────
-        if answer == DEFAULT_NO_ANSWER or DEFAULT_NO_ANSWER in answer:
+        normalized = answer.strip().strip('"\'').strip()
+        if normalized == DEFAULT_NO_ANSWER:
             latency_ms = (time.perf_counter() - started) * 1000
             self.metrics.record_query(
                 success=True,
                 latency_ms=latency_ms,
-                validation_passed=False,
-                validation_skipped=True,
+                refusal=True,
             )
             return {
                 "answer": DEFAULT_NO_ANSWER,
-                "sources": sorted(sources),
+                "sources": [],
                 "validation": {
                     "is_valid": False,
                     "reason": "Model declined to answer (insufficient context)",
@@ -311,6 +341,28 @@ class RAGEngine:
                 },
                 "confidence": 0.0,
             }
+
+        if DEFAULT_NO_ANSWER in answer:
+            trimmed = answer.replace(DEFAULT_NO_ANSWER, "").strip()
+            if trimmed:
+                answer = trimmed
+            else:
+                latency_ms = (time.perf_counter() - started) * 1000
+                self.metrics.record_query(
+                    success=True,
+                    latency_ms=latency_ms,
+                    refusal=True,
+                )
+                return {
+                    "answer": DEFAULT_NO_ANSWER,
+                    "sources": [],
+                    "validation": {
+                        "is_valid": False,
+                        "reason": "Model declined to answer (insufficient context)",
+                        "skipped": True,
+                    },
+                    "confidence": 0.0,
+                }
 
         try:
             validation = self.validator.validate(question=question, answer=answer, context=context)

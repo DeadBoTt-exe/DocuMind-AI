@@ -5,6 +5,7 @@ from qdrant_client.models import (
     Distance,
     FieldCondition,
     Filter,
+    HasIdCondition,
     MatchValue,
     PointStruct,
     VectorParams,
@@ -76,22 +77,6 @@ def main():
                 "Recreate the collection or change embedding model."
             )
 
-        # Remove stale points for the documents being indexed to prevent orphan chunks
-        source_files = {c["metadata"]["file"] for c in chunks if "metadata" in c and "file" in c["metadata"]}
-        for src_file in source_files:
-            client.delete(
-                collection_name=settings.qdrant_collection,
-                points_selector=Filter(
-                    must=[
-                        FieldCondition(
-                            key="file",
-                            match=MatchValue(value=src_file),
-                        )
-                    ]
-                ),
-            )
-            print(f"Cleared existing points for file '{src_file}'")
-
     points = []
     for emb, chunk in zip(embeddings, chunks, strict=True):
         points.append(
@@ -106,6 +91,27 @@ def main():
         batch = points[i : i + settings.index_upsert_batch_size]
         client.upsert(collection_name=settings.qdrant_collection, points=batch)
         print(f"Upserted {i + len(batch)} / {len(points)} points")
+
+    # Atomic re-index: delete stale points AFTER upserting all new points
+    if exists:
+        source_files = {c["metadata"]["file"] for c in chunks if "metadata" in c and "file" in c["metadata"]}
+        new_ids = [p.id for p in points]
+        for src_file in source_files:
+            client.delete(
+                collection_name=settings.qdrant_collection,
+                points_selector=Filter(
+                    must=[
+                        FieldCondition(
+                            key="file",
+                            match=MatchValue(value=src_file),
+                        )
+                    ],
+                    must_not=[
+                        HasIdCondition(has_id=new_ids)
+                    ],
+                ),
+            )
+            print(f"Pruned stale points for file '{src_file}'")
 
     print(f"Indexed {len(points)} chunks into Qdrant")
 

@@ -72,7 +72,7 @@ Expected Response:
 {
   "status": "ok",
   "qdrant": "ok",
-  "points": 1358
+  "points": 1978
 }
 ```
 

@@ -177,3 +177,16 @@ async def test_ask_with_api_key_non_ascii_returns_401_not_500(monkeypatch):
     with pytest.raises(HTTPException) as exc_info:
         await q_mod.verify_api_key("non-ascii-🔑-token")
     assert exc_info.value.status_code == 401
+
+
+
+def test_ask_with_api_key_non_ascii_via_http_client(client, monkeypatch):
+    import documind.routes.questions as q_mod
+    monkeypatch.setattr(q_mod.settings, "api_key", "secret-test-token")
+    r = client.post(
+        "/ask",
+        json={"question": "What is an SCP?"},
+        headers=[(b"x-api-key", b"invalid-\xff-key")],
+    )
+    assert r.status_code == 401
+    assert "Invalid or missing API key" in r.json()["detail"]

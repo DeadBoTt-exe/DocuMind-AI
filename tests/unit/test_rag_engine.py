@@ -152,6 +152,28 @@ async def test_refusal_skips_validation_and_returns_zero_confidence():
     r = await e.ask_async("What is the speed of light?")
     assert r["answer"] == DEFAULT_NO_ANSWER
     assert r["confidence"] == 0.0
+    assert r["sources"] == []
     assert r["validation"]["skipped"] is True
     assert r["validation"]["is_valid"] is False
-    assert e.metrics.validation_skipped == 1
+    assert e.metrics.refusals == 1
+    assert e.metrics.validation_skipped == 0
+    assert e.metrics.validation_failures == 0
+
+
+async def test_empty_generation_returns_llm_error_answer():
+    e = make_engine([point()], gen_text="")
+    r = await e.ask_async("What is an SCP?")
+    assert r["answer"] == LLM_ERROR_ANSWER
+    assert r["confidence"] == 0.0
+    assert r["validation"]["is_valid"] is False
+    assert e.metrics.failed_queries == 1
+
+
+async def test_partial_answer_with_disclaimer_strips_disclaimer_and_validates():
+    partial_text = f"SCPs manage permissions centrally. {DEFAULT_NO_ANSWER}"
+    e = make_engine([point()], gen_text=partial_text)
+    r = await e.ask_async("What is an SCP?")
+    assert r["answer"] == "SCPs manage permissions centrally."
+    assert r["validation"]["is_valid"] is True
+    assert r["confidence"] > 0.0
+    assert e.metrics.refusals == 0

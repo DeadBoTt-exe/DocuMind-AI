@@ -19,6 +19,7 @@ class QueryMetrics:
     total_queries: int = 0
     successful_queries: int = 0
     failed_queries: int = 0
+    refusals: int = 0
 
     # ── Validation counters ────────────────────────────────────────────────
     validation_failures: int = 0
@@ -41,8 +42,9 @@ class QueryMetrics:
         *,
         success: bool,
         latency_ms: float,
-        validation_passed: bool,
+        validation_passed: bool | None = None,
         validation_skipped: bool = False,
+        refusal: bool = False,
     ) -> None:
         self.total_queries += 1
         self.total_latency_ms += latency_ms
@@ -54,11 +56,13 @@ class QueryMetrics:
         else:
             self.failed_queries += 1
 
-        if not validation_passed:
-            self.validation_failures += 1
-
-        if validation_skipped:
-            self.validation_skipped += 1
+        if refusal:
+            self.refusals += 1
+        else:
+            if validation_passed is False:
+                self.validation_failures += 1
+            if validation_skipped:
+                self.validation_skipped += 1
 
     def record_circuit_opened(self) -> None:
         """Call once each time the circuit breaker transitions closed → open."""
@@ -80,6 +84,7 @@ class QueryMetrics:
                 "total": n,
                 "successful": self.successful_queries,
                 "failed": self.failed_queries,
+                "refusals": self.refusals,
             },
             "validation": {
                 "failures": self.validation_failures,

@@ -48,3 +48,14 @@ def test_clean_text_preserves_numbered_steps():
     cleaned_table = clean_text(table_text)
     assert "100" in cleaned_table
     assert "120" in cleaned_table
+
+
+
+def test_config_settings_populates_by_name_with_aliases():
+    s = Settings(
+        GEMINI_API_KEY="test-key",
+        gemini_generation_model="custom-gen-model",
+        gemini_validation_model="custom-val-model",
+    )
+    assert s.gemini_generation_model == "custom-gen-model"
+    assert s.gemini_validation_model == "custom-val-model"

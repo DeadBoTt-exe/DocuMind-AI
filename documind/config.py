@@ -24,6 +24,7 @@ class Settings(BaseSettings):
         env_file_encoding="utf-8",
         case_sensitive=False,       # QDRANT_HOST and qdrant_host both work
         extra="ignore",             # Don't error on unrecognised env vars
+        populate_by_name=True,      # Allow initializing by field name even with aliases
     )
 
     # ── Gemini ────────────────────────────────────────────────────────────────
@@ -57,7 +58,7 @@ class Settings(BaseSettings):
     embedding_batch_size: int = Field(default=16, ge=1, le=512)
 
     # ── Chunking ──────────────────────────────────────────────────────────────
-    chunk_max_chars: int = Field(default=2000, ge=100)
+    chunk_max_chars: int = Field(default=1200, ge=100)
     chunk_overlap_sentences: int = Field(default=2, ge=0)
     chunk_min_chars: int = Field(
         default=100,
@@ -75,7 +76,8 @@ class Settings(BaseSettings):
     # ── Indexing ───────────────────────────────────────────────────────
     index_upsert_batch_size: int = Field(default=64, ge=1)
 
-    # ── Validator / circuit breaker ───────────────────────────────────────────
+    # ── Generation & Validator timeouts / circuit breaker ─────────────────────
+    generation_timeout_seconds: float = Field(default=30.0, gt=0)
     validation_timeout_seconds: float = Field(default=15.0, gt=0)
     validation_max_failures: int = Field(
         default=3,
