@@ -20,6 +20,7 @@ __pycache__/
 .venv/
 venv/
 env/
+myenv/
 
 # -----------------------------
 # Environment variables / secrets
@@ -40,6 +41,9 @@ Thumbs.db
 .vscode/
 .idea/
 .claude/
+.claude-code/
+claude_desktop_config.json
+*.claude.json
 *.swp
 *.swo
 
@@ -48,6 +52,7 @@ Thumbs.db
 # -----------------------------
 architecture-overview/
 graphify-out/
+.graphify_analysis.json
 docs/*.txt
 *.extracted.txt
 
