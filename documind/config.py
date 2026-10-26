@@ -31,13 +31,13 @@ class Settings(BaseSettings):
     gemini_api_key: str = Field(..., alias="GEMINI_API_KEY")
     # Generation model — used by RAGEngine
     gemini_generation_model: str = Field(
-        default="models/gemini-2.5-flash",
+        default="gemini-3.5-flash-lite",
         alias="GEMINI_GENERATION_MODEL",
         description="Full model string passed to google.genai Client",
     )
     # Validation model — used by GroundingValidator
     gemini_validation_model: str = Field(
-        default="gemini-2.5-flash",
+        default="gemini-3.5-flash-lite",
         alias="GEMINI_VALIDATION_MODEL",
         description="Model name passed to google.genai Client",
     )

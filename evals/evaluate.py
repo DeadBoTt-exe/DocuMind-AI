@@ -25,7 +25,7 @@ from typing import Any
 from rich.console import Console
 from rich.table import Table
 
-from documind.prompts import DEFAULT_NO_ANSWER, VALIDATION_FAILED_ANSWER
+from documind.prompts import DEFAULT_NO_ANSWER, LLM_ERROR_ANSWER, VALIDATION_FAILED_ANSWER
 
 logger = logging.getLogger(__name__)
 
@@ -111,24 +111,38 @@ class BenchmarkEvaluator:
             notes="; ".join(notes) if notes else "OK",
         )
 
-    async def run(self, rag_engine: Any) -> list[EvalResult]:
+    async def run(self, rag_engine: Any, inter_query_delay: float = 0.0) -> list[EvalResult]:
         results: list[EvalResult] = []
 
         for item in self.dataset:
             start_t = time.perf_counter()
-            try:
-                response = await rag_engine.ask_async(item["question"])
-            except Exception as e:
-                response = {
-                    "answer": f"Evaluation error: {e}",
-                    "sources": [],
-                    "validation": {"is_valid": False, "reason": str(e), "skipped": True},
-                    "confidence": 0.0,
-                }
+            response = None
+            for attempt in range(4):
+                try:
+                    response = await rag_engine.ask_async(item["question"])
+                    if response.get("answer") == LLM_ERROR_ANSWER and attempt < 3:
+                        await asyncio.sleep(5.0 * (attempt + 1))
+                        continue
+                    break
+                except Exception as e:
+                    if attempt < 3 and ("429" in str(e) or "503" in str(e)):
+                        await asyncio.sleep(5.0 * (attempt + 1))
+                        continue
+                    response = {
+                        "answer": f"Evaluation error: {e}",
+                        "sources": [],
+                        "validation": {"is_valid": False, "reason": str(e), "skipped": True},
+                        "confidence": 0.0,
+                    }
+                    break
+
             latency_ms = (time.perf_counter() - start_t) * 1000
 
             eval_res = self.evaluate_response(item, response, latency_ms)
             results.append(eval_res)
+
+            if inter_query_delay > 0:
+                await asyncio.sleep(inter_query_delay)
 
         return results
 
@@ -243,9 +257,17 @@ async def main():
         default=None,
         help="Optional path to export eval results as JSON",
     )
+    parser.add_argument(
+        "--delay",
+        type=float,
+        default=None,
+        help="Optional delay in seconds between queries to respect API rate limits",
+    )
     args = parser.parse_args()
 
     evaluator = BenchmarkEvaluator(args.dataset)
+
+    delay = args.delay if args.delay is not None else (0.0 if args.mock else 3.0)
 
     if args.mock:
         engine = make_mock_rag_engine()
@@ -253,7 +275,7 @@ async def main():
         from documind.rag import RAGEngine
         engine = RAGEngine()
 
-    results = await evaluator.run(engine)
+    results = await evaluator.run(engine, inter_query_delay=delay)
     summary = evaluator.print_summary(results)
 
     if args.output:

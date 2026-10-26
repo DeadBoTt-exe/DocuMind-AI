@@ -142,6 +142,12 @@ The benchmark tests 20 curated scenarios:
 - **5 Tricky / Boundary** queries on limits, quotas, and structural invariants.
 - **5 Out-of-Domain Negative Controls** (Azure, Kubernetes, ML, trivia) where the model must cleanly refuse to answer (`"I don't know based on the documentation."`) without hallucinating.
 
+### Live Benchmark Baseline (`evals/baseline_results.json`)
+- **Total Scenarios**: 20
+- **Pass Rate**: 80.0% (16/20 passing)
+- **Hallucination Rate (Negative Cases)**: **0.0%** (5/5 cleanly rejected with confidence 0.0)
+- **Average Latency**: **3,200 ms** (including embedding, Qdrant Cloud vector search, generation, and strict factual validation)
+
 ---
 
 ## Deployment

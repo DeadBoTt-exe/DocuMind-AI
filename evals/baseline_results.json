@@ -1,11 +1,11 @@
 {
   "summary": {
     "total": 20,
-    "passed": 20,
-    "failed": 0,
-    "pass_rate_pct": 100.0,
+    "passed": 16,
+    "failed": 4,
+    "pass_rate_pct": 80.0,
     "hallucination_rate_pct": 0.0,
-    "avg_latency_ms": 15.42
+    "avg_latency_ms": 3200.14
   },
   "results": [
     {
@@ -14,8 +14,8 @@
       "question": "What is a service control policy (SCP) in AWS Organizations?",
       "passed": true,
       "is_valid": true,
-      "confidence": 0.88,
-      "latency_ms": 13.875400007236749,
+      "confidence": 0.82,
+      "latency_ms": 2924.5805999962613,
       "notes": "OK"
     },
     {
@@ -24,8 +24,8 @@
       "question": "What is the difference between a management account and a member account in AWS Organizations?",
       "passed": true,
       "is_valid": true,
-      "confidence": 0.88,
-      "latency_ms": 15.316200006054714,
+      "confidence": 0.83,
+      "latency_ms": 2925.3167000133544,
       "notes": "OK"
     },
     {
@@ -34,19 +34,19 @@
       "question": "What is an organizational unit (OU) in AWS Organizations?",
       "passed": true,
       "is_valid": true,
-      "confidence": 0.88,
-      "latency_ms": 15.019699989352375,
+      "confidence": 0.87,
+      "latency_ms": 2657.5691999751143,
       "notes": "OK"
     },
     {
       "id": "q04",
       "category": "directly_answerable",
       "question": "How does policy inheritance work across organizational units in AWS Organizations?",
-      "passed": true,
-      "is_valid": true,
-      "confidence": 0.88,
-      "latency_ms": 15.231600002152845,
-      "notes": "OK"
+      "passed": false,
+      "is_valid": false,
+      "confidence": 0.0,
+      "latency_ms": 3085.3279000148177,
+      "notes": "Refusal or validation failure on answerable question.; Low keyword overlap with expected answer domain."
     },
     {
       "id": "q05",
@@ -54,8 +54,8 @@
       "question": "What is consolidated billing in AWS Organizations?",
       "passed": true,
       "is_valid": true,
-      "confidence": 0.88,
-      "latency_ms": 15.725999983260408,
+      "confidence": 0.82,
+      "latency_ms": 3133.552699990105,
       "notes": "OK"
     },
     {
@@ -64,8 +64,8 @@
       "question": "Can a service control policy grant permissions to an account?",
       "passed": true,
       "is_valid": true,
-      "confidence": 0.88,
-      "latency_ms": 15.661800018278882,
+      "confidence": 0.67,
+      "latency_ms": 2124.700600048527,
       "notes": "Low keyword overlap with expected answer domain."
     },
     {
@@ -74,8 +74,8 @@
       "question": "What is a backup policy in AWS Organizations?",
       "passed": true,
       "is_valid": true,
-      "confidence": 0.88,
-      "latency_ms": 15.780099987750873,
+      "confidence": 0.82,
+      "latency_ms": 2275.121000013314,
       "notes": "OK"
     },
     {
@@ -84,8 +84,8 @@
       "question": "What is a tag policy in AWS Organizations?",
       "passed": true,
       "is_valid": true,
-      "confidence": 0.88,
-      "latency_ms": 15.164899989031255,
+      "confidence": 0.87,
+      "latency_ms": 3544.3513999925926,
       "notes": "OK"
     },
     {
@@ -94,9 +94,9 @@
       "question": "What are the requirements for removing a member account from an organization?",
       "passed": true,
       "is_valid": true,
-      "confidence": 0.88,
-      "latency_ms": 15.263800014508888,
-      "notes": "Low keyword overlap with expected answer domain."
+      "confidence": 0.75,
+      "latency_ms": 3386.8936999933794,
+      "notes": "OK"
     },
     {
       "id": "q10",
@@ -104,8 +104,8 @@
       "question": "What is trusted access in AWS Organizations?",
       "passed": true,
       "is_valid": true,
-      "confidence": 0.88,
-      "latency_ms": 15.743900003144518,
+      "confidence": 0.84,
+      "latency_ms": 20803.114200010896,
       "notes": "OK"
     },
     {
@@ -114,39 +114,39 @@
       "question": "What is the maximum character size limit for an individual service control policy document?",
       "passed": true,
       "is_valid": true,
-      "confidence": 0.88,
-      "latency_ms": 15.90660001966171,
+      "confidence": 0.68,
+      "latency_ms": 2858.2673000055365,
       "notes": "OK"
     },
     {
       "id": "q12",
       "category": "tricky_partially_answerable",
       "question": "Does an SCP attached to an OU affect users in the management account if that account is inside the OU?",
-      "passed": true,
-      "is_valid": true,
-      "confidence": 0.88,
-      "latency_ms": 15.213800012134016,
-      "notes": "OK"
+      "passed": false,
+      "is_valid": false,
+      "confidence": 0.0,
+      "latency_ms": 1319.1455000196584,
+      "notes": "Refusal or validation failure on answerable question.; Expected source 'organizations-userguide.pdf' not in retrieved sources."
     },
     {
       "id": "q13",
       "category": "tricky_partially_answerable",
       "question": "What happens if you detach the FullAWSAccess policy from the root without attaching another policy?",
-      "passed": true,
-      "is_valid": true,
-      "confidence": 0.88,
-      "latency_ms": 15.546999988146126,
-      "notes": "OK"
+      "passed": false,
+      "is_valid": false,
+      "confidence": 0.0,
+      "latency_ms": 1346.6440999764018,
+      "notes": "Refusal or validation failure on answerable question.; Expected source 'organizations-userguide.pdf' not in retrieved sources."
     },
     {
       "id": "q14",
       "category": "tricky_partially_answerable",
       "question": "How many organizational units can be nested under each other in AWS Organizations?",
-      "passed": true,
-      "is_valid": true,
-      "confidence": 0.88,
-      "latency_ms": 15.649800014216453,
-      "notes": "OK"
+      "passed": false,
+      "is_valid": false,
+      "confidence": 0.0,
+      "latency_ms": 1513.10519996332,
+      "notes": "Refusal or validation failure on answerable question.; Expected source 'organizations-userguide.pdf' not in retrieved sources."
     },
     {
       "id": "q15",
@@ -154,9 +154,9 @@
       "question": "Can an AWS account belong to multiple organizations or multiple parent OUs simultaneously?",
       "passed": true,
       "is_valid": true,
-      "confidence": 0.88,
-      "latency_ms": 16.606099990895018,
-      "notes": "Low keyword overlap with expected answer domain."
+      "confidence": 0.8,
+      "latency_ms": 2454.8560000257567,
+      "notes": "OK"
     },
     {
       "id": "q16",
@@ -165,7 +165,7 @@
       "passed": true,
       "is_valid": false,
       "confidence": 0.0,
-      "latency_ms": 15.677799994591624,
+      "latency_ms": 2298.3804999967106,
       "notes": "OK"
     },
     {
@@ -175,7 +175,7 @@
       "passed": true,
       "is_valid": false,
       "confidence": 0.0,
-      "latency_ms": 15.412599983392283,
+      "latency_ms": 1480.942199996207,
       "notes": "OK"
     },
     {
@@ -185,7 +185,7 @@
       "passed": true,
       "is_valid": false,
       "confidence": 0.0,
-      "latency_ms": 15.31250000698492,
+      "latency_ms": 1181.5498999785632,
       "notes": "OK"
     },
     {
@@ -195,7 +195,7 @@
       "passed": true,
       "is_valid": false,
       "confidence": 0.0,
-      "latency_ms": 14.95829998748377,
+      "latency_ms": 1559.744700032752,
       "notes": "OK"
     },
     {
@@ -205,7 +205,7 @@
       "passed": true,
       "is_valid": false,
       "confidence": 0.0,
-      "latency_ms": 15.35380000132136,
+      "latency_ms": 1129.6817000256851,
       "notes": "OK"
     }
   ]
