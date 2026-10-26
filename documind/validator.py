@@ -30,7 +30,10 @@ logger = logging.getLogger(__name__)
 
 class GroundingValidator:
     def __init__(self, metrics: "QueryMetrics | None" = None):
-        self.client = genai.Client(api_key=settings.gemini_api_key)
+        self.client = genai.Client(
+            api_key=settings.gemini_api_key,
+            http_options=genai_types.HttpOptions(timeout=25_000),
+        )
         self.model = settings.gemini_validation_model
         self._failure_count = 0
         self._circuit_open = False
@@ -148,7 +151,10 @@ class GroundingValidator:
 
         except Exception as e:
             self._record_failure()
-            logger.error(f"Validation error: {e} | failures={self._failure_count}")
+            logger.error(
+                "Validation error | error_type=%s | failures=%s",
+                type(e).__name__, self._failure_count,
+            )
             return {
                 "is_valid": False,
                 "reason": "Validation could not run (error)",
@@ -202,7 +208,7 @@ class GroundingValidator:
             }
         except Exception as e:
             self._record_failure()
-            logger.error(f"Validation error: {e}")
+            logger.error("Validation error | error_type=%s", type(e).__name__)
             return {
                 "is_valid": False,
                 "reason": "Validation could not run (error)",

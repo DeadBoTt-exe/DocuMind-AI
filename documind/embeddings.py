@@ -1,6 +1,7 @@
 """Embedding abstraction with L2 normalization for consistent similarity scoring."""
 
 import asyncio
+import concurrent.futures
 import logging
 
 import numpy as np
@@ -17,6 +18,9 @@ class EmbeddingModel:
         self.model = SentenceTransformer(settings.embedding_model)
         self.batch_size = settings.embedding_batch_size
         self._lock = asyncio.Lock()  # Phase 3 concurrency fix — included now, costs nothing
+        self._executor = concurrent.futures.ThreadPoolExecutor(
+            max_workers=1, thread_name_prefix="embedding"
+        )
         logger.info("Embedding model loaded")
 
     def embed(self, texts: list[str], normalize: bool = True) -> np.ndarray:
@@ -32,4 +36,8 @@ class EmbeddingModel:
 
     async def embed_async(self, texts: list[str], normalize: bool = True) -> np.ndarray:
         async with self._lock:
-            return await asyncio.to_thread(self.embed, texts, normalize)
+            loop = asyncio.get_running_loop()
+            return await asyncio.wait_for(
+                loop.run_in_executor(self._executor, self.embed, texts, normalize),
+                timeout=settings.generation_timeout_seconds,
+            )

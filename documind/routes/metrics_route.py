@@ -17,6 +17,7 @@ class QueryStats(BaseModel):
     total: int
     successful: int
     failed: int
+    refusals: int = 0
 
 
 class ValidationStats(BaseModel):

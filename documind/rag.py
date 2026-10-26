@@ -1,10 +1,12 @@
 """Core RAG engine: embedding, retrieval, generation, validation, and confidence scoring."""
 
 import asyncio
+import concurrent.futures
 import logging
 import time
 
 import google.genai as genai
+import google.genai.types as genai_types
 from qdrant_client import AsyncQdrantClient, QdrantClient
 
 from documind.confidence import ConfidenceScorer
@@ -25,7 +27,10 @@ logger = logging.getLogger(__name__)
 
 class RAGEngine:
     def __init__(self):
-        self.client = genai.Client(api_key=settings.gemini_api_key)
+        self.client = genai.Client(
+            api_key=settings.gemini_api_key,
+            http_options=genai_types.HttpOptions(timeout=25_000),
+        )
         self.model = settings.gemini_generation_model
 
         # Metrics first — injected into validator so circuit state is shared
@@ -136,11 +141,11 @@ class RAGEngine:
                 raise ValueError("empty generation")
             logger.info(f"LLM response received | answer_length={len(answer)}")
         except Exception as e:
-            logger.error(f"LLM generation failed: {e}")
+            logger.error("LLM generation failed | error_type=%s", type(e).__name__)
             self.metrics.record_query(
                 success=False,
                 latency_ms=(time.perf_counter() - started) * 1000,
-                validation_passed=False,
+                validation_passed=None,
             )
             return {
                 "answer": LLM_ERROR_ANSWER,
@@ -309,11 +314,11 @@ class RAGEngine:
                 raise ValueError("empty generation")
             logger.info(f"LLM response received | answer_length={len(answer)}")
         except Exception as e:
-            logger.error(f"LLM generation failed: {e}")
+            logger.error("LLM generation failed | error_type=%s", type(e).__name__)
             self.metrics.record_query(
                 success=False,
                 latency_ms=(time.perf_counter() - started) * 1000,
-                validation_passed=False,
+                validation_passed=None,
             )
             return {
                 "answer": LLM_ERROR_ANSWER,

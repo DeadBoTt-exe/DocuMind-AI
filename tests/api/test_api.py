@@ -93,6 +93,7 @@ def test_metrics_shape(client):
     b = client.get("/metrics").json()
     assert set(b) == {"uptime_seconds", "queries", "validation", "latency_ms", "circuit_breaker"}
     assert b["latency_ms"]["min"] is None
+    assert b["queries"]["refusals"] == 0
 
 
 def test_openapi_lists_routes(client):

@@ -1,5 +1,8 @@
 """RAGEngine.ask_async with Qdrant, Gemini and the validator replaced by fakes."""
 
+import asyncio
+import os
+import time
 from types import SimpleNamespace
 
 import numpy as np
@@ -34,10 +37,12 @@ class FakeQdrant:
 
 
 class FakeModels:
-    def __init__(self, text, exc):
-        self.text, self.exc = text, exc
+    def __init__(self, text, exc, delay=0):
+        self.text, self.exc, self.delay = text, exc, delay
 
     def generate_content(self, model, contents):
+        if self.delay:
+            time.sleep(self.delay)
         if self.exc:
             raise self.exc
         return SimpleNamespace(text=f"  {self.text}  ")
@@ -115,6 +120,25 @@ async def test_generation_failure_hides_exception_text():
     assert r["answer"] == LLM_ERROR_ANSWER and r["confidence"] == 0.0
     assert "secret-token-123" not in str(r)
     assert e.metrics.failed_queries == 1
+
+
+async def test_generation_timeouts_do_not_permanently_wedge_worker_pool(monkeypatch):
+    monkeypatch.setattr(settings, "generation_timeout_seconds", 0.01)
+    e = make_engine([point()])
+    # Simulate SDK requests that finish eventually but outlive the app's request timeout.
+    e.client.models = FakeModels("An SCP is a policy.", None, delay=0.08)
+    worker_count = min(32, (os.cpu_count() or 1) + 4)
+
+    timed_out = await asyncio.gather(
+        *(e.ask_async("What is an SCP?") for _ in range(worker_count + 2))
+    )
+    assert all(result["answer"] == LLM_ERROR_ANSWER for result in timed_out)
+
+    # Once the SDK calls finish, the same service can handle another request.
+    await asyncio.sleep(0.25)
+    e.client.models.delay = 0
+    recovered = await e.ask_async("What is an SCP?")
+    assert recovered["answer"] == "An SCP is a policy."
 
 
 async def test_invalid_validation_withholds_answer():
