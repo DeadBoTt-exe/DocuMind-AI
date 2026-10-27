@@ -102,6 +102,9 @@ async def verify_api_key(api_key: str | None = Depends(api_key_header)) -> None:
         if configured_key is not None and not configured_key.strip():
             logger.warning("API_KEY is configured with an empty string; authentication is disabled.")
         return
+    # Secret Manager values created with `echo` (no -n) carry a trailing newline that no
+    # HTTP client can ever send back, so compare against the stripped secret.
+    configured_key = configured_key.strip()
 
     if not api_key or not secrets.compare_digest(api_key.encode("utf-8"), configured_key.encode("utf-8")):
         raise HTTPException(

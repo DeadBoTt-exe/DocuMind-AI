@@ -1,7 +1,6 @@
 """Core RAG engine: embedding, retrieval, generation, validation, and confidence scoring."""
 
 import asyncio
-import concurrent.futures
 import logging
 import time
 

@@ -76,6 +76,7 @@ include = ["documind*"]
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 asyncio_mode = "auto"                  # pytest-asyncio: no @pytest.mark.asyncio needed
+asyncio_default_fixture_loop_scope = "function"
 addopts = "-v --tb=short"
 
 # ── Ruff (linter) config ──────────────────────────────────────────────────────

@@ -14,6 +14,9 @@ RUN python -m spacy download en_core_web_sm
 # Bake the embedding model into the image so cold starts don't download it
 RUN python -c "from sentence_transformers import SentenceTransformer; SentenceTransformer('all-mpnet-base-v2')"
 
+# Weights are baked in above; forbid hub lookups so cold starts can't fail on a HF outage/429
+ENV HF_HUB_OFFLINE=1 TRANSFORMERS_OFFLINE=1
+
 COPY documind ./documind
 
 # Run as a non-root user

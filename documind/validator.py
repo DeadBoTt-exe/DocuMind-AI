@@ -59,10 +59,9 @@ class GroundingValidator:
         response = self.client.models.generate_content(
             model=self.model,
             contents=prompt,
-            config=genai_types.GenerateContentConfig(
-                temperature=0.0,
-                max_output_tokens=1024,
-            ),
+            # No temperature: deprecated (ignored) on Gemini 3.5+, HTTP 400 on future models.
+            # Determinism comes from the strict VALID / INVALID prompt instead.
+            config=genai_types.GenerateContentConfig(max_output_tokens=1024),
         )
         if not response.text:
             return ""

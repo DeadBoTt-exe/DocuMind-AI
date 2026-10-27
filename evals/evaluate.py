@@ -63,14 +63,15 @@ class BenchmarkEvaluator:
 
         if category == "out_of_domain":
             # Must refuse cleanly: either DEFAULT_NO_ANSWER or VALIDATION_FAILED_ANSWER
-            is_refusal = (
-                DEFAULT_NO_ANSWER in answer
-                or answer == VALIDATION_FAILED_ANSWER
-                or not is_valid
-            )
-            if not is_refusal:
+            is_refusal = DEFAULT_NO_ANSWER in answer or answer == VALIDATION_FAILED_ANSWER
+            infrastructure_error = answer == LLM_ERROR_ANSWER or answer.startswith("Evaluation error")
+            if infrastructure_error:
+                notes.append("Infrastructure error (LLM/eval failure), not a real refusal.")
+            elif not is_refusal:
                 passed = False
                 notes.append("Hallucination detected: model answered out-of-domain question.")
+            if infrastructure_error:
+                passed = False
             if confidence > 0.4:
                 passed = False
                 notes.append(f"Confidence score {confidence} too high for unanswerable question.")
@@ -286,6 +287,8 @@ async def main():
                     "id": r.question_id,
                     "category": r.category,
                     "question": r.question,
+                    "answer": r.answer,
+                    "sources": r.sources,
                     "passed": r.passed,
                     "is_valid": r.is_valid,
                     "confidence": r.confidence,

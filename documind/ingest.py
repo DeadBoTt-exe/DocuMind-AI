@@ -1,5 +1,6 @@
 """Document ingestion pipeline with multi-source support."""
 
+import re
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -27,6 +28,14 @@ def extract_text_fast(page) -> str:
     )
 
 
+def is_toc_page(text: str, threshold: float = 0.3) -> bool:
+    """True for table-of-contents pages: mostly dot leaders ('Title ........ 42')."""
+    if not text:
+        return False
+    leader_chars = sum(len(m.group()) for m in re.finditer(r"\.{4,}", text))
+    return leader_chars / len(text) > threshold
+
+
 def load_pdf_document(pdf_path: Path, service_name: str) -> list[dict]:
     if not pdf_path.exists():
         raise FileNotFoundError(f"PDF not found: {pdf_path}")
@@ -38,7 +47,7 @@ def load_pdf_document(pdf_path: Path, service_name: str) -> list[dict]:
             raw_text = extract_text_fast(page)
             cleaned = clean_text(raw_text)
 
-            if len(cleaned) < 50:
+            if len(cleaned) < 50 or is_toc_page(cleaned):
                 continue
 
             chunks = chunk_text(

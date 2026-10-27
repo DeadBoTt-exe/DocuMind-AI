@@ -16,8 +16,8 @@ with a strong emphasis on correctness, transparency, and system design.
 - Cleans and chunks text with page-level metadata and deterministic UUID identity
 - Offline embedding and indexing into Qdrant (local or Qdrant Cloud)
 - Semantic vector search at query time (`all-mpnet-base-v2`)
-- Gemini powered answer generation (`gemini-2.5-flash`)
-- LLM-based grounding validation (Gemini, temperature 0) that rejects answers not supported by retrieved context; fails closed (answer withheld, `validation.skipped: true`) if the validator is unavailable
+- Gemini powered answer generation (`gemini-3.5-flash-lite`)
+- LLM-based grounding validation that rejects answers not supported by retrieved context; fails closed (answer withheld, `validation.skipped: true`) if the validator is unavailable
 - Evidence-based confidence scoring combining retrieval score and chunk coverage
 - Runtime observability with in-process query latency, error counters, and circuit breaker metrics
 - Optional API key authentication (`X-API-Key`) protecting `/ask` against unauthorized quota spend
@@ -163,7 +163,7 @@ See detailed setup in [docs/cloud-run-deployment.md](docs/cloud-run-deployment.m
 
 ## Tech Stack
 
-- **LLM**: Google Gemini (`gemini-2.5-flash`) via `google-genai`
+- **LLM**: Google Gemini (`gemini-3.5-flash-lite`) via `google-genai`
 - **Vector DB**: Qdrant (`qdrant-client`)
 - **Embeddings**: Sentence Transformers (`all-mpnet-base-v2`)
 - **Web API**: FastAPI + Uvicorn
